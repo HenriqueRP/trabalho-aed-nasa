@@ -1,17 +1,21 @@
-#ifndef LISTA_H
-#define LISTA_H
+#ifndef LISTA_ENCADEADA_H
+#define LISTA_ENCADEADA_H
 
 #include <stdbool.h>
 #include "item.h"
 
-#define TAM_MAX 100 // Tamanho predefinido pra suportar ate N=100
+typedef struct lista_encadeada LISTA_ENC;
 
-typedef struct lista_ LISTA;
+LISTA_ENC *lista_enc_criar(void);
 
-LISTA *lista_criar(void);
-void lista_apagar(LISTA **lista);
-bool lista_inserir(LISTA *lista, ITEM *item);
-void lista_remover_menor(LISTA *lista);
-void lista_imprimir_final(const LISTA *lista);
+bool lista_enc_adicionar_fim(LISTA_ENC *lista, ITEM *item);
+bool lista_enc_adicionar_inicio(LISTA_ENC *lista, ITEM *item);
+
+ITEM *lista_enc_remover_inicio(LISTA_ENC *lista);
+
+int lista_enc_tam(LISTA_ENC *lista);
+bool lista_enc_vazia(LISTA_ENC *lista);
+
+void lista_enc_apagar(LISTA_ENC **lista);
 
 #endif
