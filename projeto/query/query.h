@@ -89,7 +89,7 @@ typedef enum {
     QUERY_BOOLEANO
 } TipoValorQuery;
 
-// estrutura que armazena o valor que a funcao de ler um campo especifico da query retorna 
+// estrutura que armazena o valor retornado pela funcao LeitorCampoQuery
 typedef struct {
     TipoValorQuery tipo;
     union {
@@ -99,13 +99,16 @@ typedef struct {
     } valor;
 } ValorQuery;
 
-// O Reader/Item fornece esta funcao para consultar um campo pelo nome
+// O Reader/Item fornece esta funcao para consultar um campo do item pelo nome
 // Retornar false significa campo desconhecido ou valor ausente
 typedef bool (*LeitorCampoQuery)(const void *item, const char *campo, ValorQuery *saida);
 
-// Aplica todos os FILTER, calcula a media ponderada de SIM e verifica ACCEPT
-// Se nao houver SIM, os FILTER bastam e a similaridade e 1.0
-// Retorna true se o item for aceito. Similaridade pode ser NULL
+// Essa funcao eh responsavel por receber um registro do dataset, 
+// verificar se ele satisfaz todos os filtros, calcular sua similaridade e decidir se deve ser aceito
+// OBS: essa funcao sera chamada pelo modulo de buscas para avaliar cada registro
+// Se nao houver SIM, os FILTER bastam e a similaridade eh 1.0
+// Retorna true se o item for aceito,e false caso contrario. Similaridade pode ser NULL
+// foi usado um ponteiro void no item para poder funcionar para ambos datasets
 bool query_avaliar(const Query *query, const void *item,
                    LeitorCampoQuery ler_campo, double *similaridade);
 
