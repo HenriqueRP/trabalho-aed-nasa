@@ -1,193 +1,180 @@
 #include <stdbool.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "config.h"
 
 // traduz o nome que veio do terminal pro enum da base
-// se não bater com nenhum dos oito, devolve false
-static bool config_base(Config *config, char *str){
-if(!strcmp(str, "pilha")){
-config->base = pilha;
-return true;
-}
-if(!strcmp(str, "fila")){
-config->base = fila;
-return true;
-}
-if(!strcmp(str, "lista_seq")){
-config->base = lista_seq;
-return true;
-}
-if(!strcmp(str, "lista_enc")){
-config->base = lista_enc;
-return true;
-}
-if(!strcmp(str, "lista_cabeca")){
-config->base = lista_cabeca;
-return true;
-}
-if(!strcmp(str, "lista_ord")){
-config->base = lista_ord;
-return true;
-}
-if(!strcmp(str, "lista_gen")){
-config->base = lista_gen;
-return true;
-}
-if(!strcmp(str, "lista_cruz")){
-config->base = lista_cruz;
-return true;
+// se não bater com nenhum dos oito, devolve uma flag invalida
+static OpcaoEstrutura config_tipo_estrutura (char *str) {
+    if(!strcmp(str, "pilha")){
+    return pilha;
+    }
+    if(!strcmp(str, "fila")){
+    return fila;
+    }
+    if(!strcmp(str, "lista_seq")){
+    return lista_seq;
+    }
+    if(!strcmp(str, "lista_enc")){
+    return lista_enc;
+    }
+    if(!strcmp(str, "lista_cabeca")){
+    return lista_cabeca;
+    }
+    if(!strcmp(str, "lista_ord")){
+    return lista_ord;
+    }
+    if(!strcmp(str, "lista_gen")){
+    return lista_gen;
+    }
+    if(!strcmp(str, "lista_cruz")){
+    return lista_cruz;
+    }
+
+    return invalid;
 }
 
-return false;
+// valida os valores numericos: atoi nao diferencia texto invalido de zero
+static bool config_numero(char *str, int *valor){
+    char *fim;
+    errno = 0;
+    long numero = strtol(str, &fim, 10);
+    if(str == fim || *fim != '\0' || errno == ERANGE || numero < 0 || numero > INT_MAX){
+    return false;
+    }
+    *valor = (int)numero;
+    return true;
 }
 
-// mesma coisa da de cima, só muda o campo
-static bool config_resultado(Config *config, char *str){
-if(!strcmp(str, "pilha")){
-config->resultado = pilha;
-return true;
-}
-if(!strcmp(str, "fila")){
-config->resultado = fila;
-return true;
-}
-if(!strcmp(str, "lista_seq")){
-config->resultado = lista_seq;
-return true;
-}
-if(!strcmp(str, "lista_enc")){
-config->resultado = lista_enc;
-return true;
-}
-if(!strcmp(str, "lista_cabeca")){
-config->resultado = lista_cabeca;
-return true;
-}
-if(!strcmp(str, "lista_ord")){
-config->resultado = lista_ord;
-return true;
-}
-if(!strcmp(str, "lista_gen")){
-config->resultado = lista_gen;
-return true;
-}
-if(!strcmp(str, "lista_cruz")){
-config->resultado = lista_cruz;
-return true;
+static bool config_top(Config *config, char *str){
+    return config_numero(str, &config->top_k);
 }
 
-return false;
+static bool config_limit(Config *config, char *str){
+    return config_numero(str, &config->limit);
 }
 
-// atoi porque os valores são garantidos válidos
-static void config_top(Config *config, char *str){
-config->top_k = atoi(str);
-}
+// os argumentos vêm em pares --opcao valor, mas a ordem pode mudar
+// percorre argv e associa cada valor ao nome correspondente
+bool config_init(Config *config, int argc, char **argv){
+    if(config == NULL) return false;
+    // zera antes de alocar: se um malloc falhar no meio, o apagar não pega lixo
+    config->reader = NULL;
+    config->input = NULL;
+    config->path = NULL;
+    config->output = NULL;
+    config->base = invalid;
+    config->resultado = invalid;
+    config->top_k = 0;
+    config->limit = 0;
 
-static void config_limit(Config *config, char *str){
-config->limit = atoi(str);
-}
+    // checa a quantidade antes de acessar argv, evitando indices inexistentes
+    if(argv == NULL || argc != 17) return false;
 
-// os valores vêm sempre na mesma ordem, então dá pra ler por posição:
-// argv[1] --reader  argv[2] valor
-// argv[3] --input   argv[4] valor
-// argv[5] --base    argv[6] valor
-// argv[7] --result  argv[8] valor
-// argv[9] --query   argv[10] valor
-// argv[11] --output argv[12] valor
-// argv[13] --top-k  argv[14] valor
-// argv[15] --limit  argv[16] valor
-bool config_init(Config *config, char **argv){
-// zera antes de alocar: se um malloc falhar no meio, o apagar não pega lixo
-config->reader = NULL;
-config->input = NULL;
-config->path = NULL;
-config->output = NULL;
+    const char *opcoes[8] = {
+    "--reader", "--input", "--base", "--result",
+    "--query", "--output", "--top-k", "--limit"
+    };
+    char *valores[8] = {NULL};
 
-// reader: tamanho do texto mais o '\0'
-config->reader = (char*)malloc(sizeof(char)*strlen(argv[2])+sizeof(char));
-if(config->reader == NULL){
-return false;
-}
+    for(int i = 1; i < argc; i += 2){
+        if(argv[i] == NULL || argv[i + 1] == NULL) return false;
+        int indice = -1;
+        for(int j = 0; j < 8; j++){
+            if(!strcmp(argv[i], opcoes[j])){
+                indice = j;
+                break;
+            }
+        }
+        if(indice == -1 || valores[indice] != NULL) return false;
+        valores[indice] = argv[i + 1];
+    }
+    
+    for(int i = 0; i < 8; i++){
+        if(valores[i] == NULL) return false;
+    }
 
-// input: se falhar, libera o reader antes de sair
-config->input = (char*)malloc(sizeof(char)*strlen(argv[4])+sizeof(char));
-if(config->input == NULL){
-free(config->reader);
-config->reader = NULL;
-return false;
-}
+    // reader: tamanho do texto mais o '\0'
+    config->reader = (char*)malloc(sizeof(char)*strlen(valores[0])+sizeof(char));
+    if(config->reader == NULL){
+        return false;
+    }
 
-// só copia depois que os dois buffers existem
-strcpy(config->reader, argv[2]);
-strcpy(config->input, argv[4]);
+    // input: se falhar, libera o reader antes de sair
+    config->input = (char*)malloc(sizeof(char)*strlen(valores[1])+sizeof(char));
+    if(config->input == NULL){
+        free(config->reader);
+        config->reader = NULL;
+        return false;
+    }
 
-// base e resultado podem falhar se o nome não for um dos oito
-if(!config_base(config, argv[6])){
-free(config->reader);
-free(config->input);
-config->reader = NULL;
-config->input = NULL;
-return false;
-}
-if(!config_resultado(config, argv[8])){
-free(config->reader);
-free(config->input);
-config->reader = NULL;
-config->input = NULL;
-return false;
-}
+    // só copia depois que os dois buffers existem
+    strcpy(config->reader, valores[0]);
+    strcpy(config->input, valores[1]);
 
-// caminho da consulta
-config->path = (char*)malloc(sizeof(char)*strlen(argv[10])+sizeof(char));
-if(config->path == NULL){
-free(config->reader);
-free(config->input);
-config->reader = NULL;
-config->input = NULL;
-return false;
-}
-strcpy(config->path, argv[10]);
+    /* atribuicao dos campos base e resultado conforme a traducao para as constantes do enum */
+    config->base = config_tipo_estrutura(valores[2]);
+    config->resultado = config_tipo_estrutura(valores[3]);
+    
+    // base e resultado podem falhar se o nome não for um dos oito
+    if(config->base == invalid || config->resultado == invalid){
+        config_apagar(config);
+        return false;
+    }
 
-// caminho de saída
-config->output = (char*)malloc(sizeof(char)*strlen(argv[12])+sizeof(char));
-if(config->output == NULL){
-free(config->reader);
-free(config->input);
-free(config->path);
-config->reader = NULL;
-config->input = NULL;
-config->path = NULL;
-return false;
-}
-strcpy(config->output, argv[12]);
+    // caminho da consulta
+    config->path = (char*)malloc(sizeof(char)*strlen(valores[4])+sizeof(char));
+    if(config->path == NULL){
+        free(config->reader);
+        free(config->input);
+        config->reader = NULL;
+        config->input = NULL;
+        return false;
+    }
+    strcpy(config->path, valores[4]);
 
-// os dois números são os últimos, nada mais pode falhar daqui pra frente
-config_top(config, argv[14]);
-config_limit(config, argv[16]);
+    // caminho de saída
+    config->output = (char*)malloc(sizeof(char)*strlen(valores[5])+sizeof(char));
+    if(config->output == NULL){
+        free(config->reader);
+        free(config->input);
+        free(config->path);
+        config->reader = NULL;
+        config->input = NULL;
+        config->path = NULL;
+        return false;
+    }
+    strcpy(config->output, valores[5]);
 
-return true;
+    // os dois numeros tambem precisam ser validados
+    if(!config_top(config, valores[6]) || !config_limit(config, valores[7])){
+        config_apagar(config);
+        return false;
+    }
+
+    return true;
 }
 
 // libera o que foi alocado e zera, pra não ficar ponteiro solto
 // não libera o próprio config, ele está na pilha do main
 void config_apagar(Config *config){
-if(config == NULL){
-return;
-}
-if(config->reader != NULL)
-free(config->reader);
-if(config->input != NULL)
-free(config->input);
-if(config->path != NULL)
-free(config->path);
-if(config->output != NULL)
-free(config->output);
+    if(config == NULL){
+        return;
+    }
+    if(config->reader != NULL)
+        free(config->reader);
+    if(config->input != NULL)
+        free(config->input);
+    if(config->path != NULL)
+        free(config->path);
+    if(config->output != NULL)
+        free(config->output);
 
-config->reader = NULL;
-config->input = NULL;
-config->path = NULL;
-config->output = NULL;
+    config->reader = NULL;
+    config->input = NULL;
+    config->path = NULL;
+    config->output = NULL;
 }
