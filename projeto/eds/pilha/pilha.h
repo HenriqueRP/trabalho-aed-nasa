@@ -8,7 +8,7 @@ typedef struct pilha PILHA;
 
 PILHA *criar_pilha(void);
 ITEM *pilha_top(PILHA *pilha);
-void pilha_push(PILHA *pilha, ITEM *item);
+bool pilha_push(PILHA *pilha, ITEM *item);
 ITEM *pilha_pop(PILHA *pilha);
 bool pilha_empty(PILHA *pilha);
 int pilha_tamanho(PILHA *pilha);
