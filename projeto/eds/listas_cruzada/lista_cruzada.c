@@ -12,8 +12,9 @@
 //
 // Cada CELULA pertence a UMA linha e a UMA coluna ao mesmo tempo.
 // 'abaixo' percorre a coluna, 'direita' percorre a linha.
-// Agora cada celula guarda uma lista de registros da mesma coordenada,
-// pois varios asteroides podem ter o mesmo par (categoria, ano).
+// Cada celula guarda uma LISTA de registros da mesma coordenada, pois
+// varios asteroides podem ter o mesmo par (categoria, ano). Sem isso,
+// 89 mil registros numa matriz de 3 x 30 perderiam quase todos.
 //
 // O ITEM aparece uma vez so na lista cruzada, mas e alcancavel por dois
 // caminhos, sem duplicacao interna de registros.
@@ -27,25 +28,27 @@ struct no_item_cruz {
 };
 
 struct no_cruzado {
-    NO_ITEM *itens, *fim; // lista de ITEMs na mesma coordenada
-    int x, y;            // posicao NESTA matriz, nao no registro
+    NO_ITEM *itens, *fim;  // lista de ITEMs na mesma coordenada
+    int x, y;              // posicao NESTA matriz, nao no registro
     NO *direita;
     NO *abaixo;
 };
 
 struct lista_cruzada {
-    NO **colunas;    // vetor de cabecas de coluna
-    NO **linhas;     // vetor de cabecas de linha
+    NO **colunas;   // vetor de cabecas de coluna
+    NO **linhas;    // vetor de cabecas de linha
     int nLinhas;
     int nColunas;
+    int total;      // itens somando todas as celulas
 
     // CamposQuery define NOMES dos atributos; os valores reais definem eixos.
     // NULL nos nomes = modo original, com coordenadas inteiras explicitas.
     char *campo_linha, *campo_coluna;
-    ValorQuery *valores_linha, *valores_coluna; // chaves copiadas, nao emprestadas
+    ValorQuery *valores_linha, *valores_coluna;  // chaves copiadas
 };
 
 static char *copiar_string(const char *origem) {
+    if (origem == NULL) return NULL;
     size_t n = strlen(origem) + 1;
     char *copia = malloc(n);
     if (copia != NULL) memcpy(copia, origem, n);
@@ -66,14 +69,20 @@ static bool copiar_valor(const ValorQuery *origem, ValorQuery *destino) {
 }
 
 static void apagar_valor(ValorQuery *valor) {
-    if (valor->tipo == QUERY_TEXTO) free((void *)valor->valor.texto);
+    if (valor->tipo == QUERY_TEXTO) {
+        free((void *)valor->valor.texto);
+        // Zera o slot: desfazer_ultimo_eixo recua o contador mas o vetor
+        // fisico continua maior, entao o slot fica com ponteiro liberado.
+        valor->valor.texto = NULL;
+    }
 }
 
 static bool valores_iguais(const ValorQuery *a, const ValorQuery *b) {
     if (a->tipo != b->tipo) return false;
-    if (a->tipo == QUERY_TEXTO)
-        return a->valor.texto != NULL && b->valor.texto != NULL &&
-               strcmp(a->valor.texto, b->valor.texto) == 0;
+    if (a->tipo == QUERY_TEXTO) {
+        if (a->valor.texto == NULL || b->valor.texto == NULL) return false;
+        return strcmp(a->valor.texto, b->valor.texto) == 0;
+    }
     if (a->tipo == QUERY_NUMERO) return a->valor.numero == b->valor.numero;
     if (a->tipo == QUERY_BOOLEANO) return a->valor.booleano == b->valor.booleano;
     return false;
@@ -135,18 +144,30 @@ LISTA_CRUZ *lista_cruz_criar_campos(const char *campo_linha,
 // So troca os vetores quando TODAS as alocacoes deram certo.
 static bool garantir_eixo(LISTA_CRUZ *lista, bool eh_linha,
                           const ValorQuery *valor, int *indice, bool *novo) {
-    int n = eh_linha ? lista->nLinhas : lista->nColunas;
-    ValorQuery *chaves = eh_linha ? lista->valores_linha : lista->valores_coluna;
-    NO **cabecas = eh_linha ? lista->linhas : lista->colunas;
+    int n;
+    ValorQuery *chaves;
+    NO **cabecas;
+
+    if (eh_linha) {
+        n = lista->nLinhas;
+        chaves = lista->valores_linha;
+        cabecas = lista->linhas;
+    } else {
+        n = lista->nColunas;
+        chaves = lista->valores_coluna;
+        cabecas = lista->colunas;
+    }
 
     *indice = buscar_valor(chaves, n, valor);
     *novo = false;
     if (*indice >= 0) return true;
+
     if (n == INT_MAX || (size_t)n + 1 > SIZE_MAX / sizeof(NO *) ||
         (size_t)n + 1 > SIZE_MAX / sizeof(ValorQuery)) return false;
 
     ValorQuery copia;
     if (!copiar_valor(valor, &copia)) return false;
+
     NO **novas_cabecas = malloc(((size_t)n + 1) * sizeof(*novas_cabecas));
     ValorQuery *novas_chaves = malloc(((size_t)n + 1) * sizeof(*novas_chaves));
     if (novas_cabecas == NULL || novas_chaves == NULL) {
@@ -181,17 +202,22 @@ static bool garantir_eixo(LISTA_CRUZ *lista, bool eh_linha,
 // Em caso de falha posterior, um eixo recem-criado ainda esta vazio.
 // A capacidade fisica do vetor pode continuar maior, mas o contador recua.
 static void desfazer_ultimo_eixo(LISTA_CRUZ *lista, bool eh_linha) {
-    int *n = eh_linha ? &lista->nLinhas : &lista->nColunas;
-    ValorQuery *chaves = eh_linha ? lista->valores_linha : lista->valores_coluna;
-    (*n)--;
-    apagar_valor(&chaves[*n]);
+    if (eh_linha) {
+        lista->nLinhas--;
+        apagar_valor(&lista->valores_linha[lista->nLinhas]);
+        return;
+    }
+    lista->nColunas--;
+    apagar_valor(&lista->valores_coluna[lista->nColunas]);
 }
 
 // Localiza a celula na linha, onde o encadeamento e ordenado por y.
 static NO *buscar_celula(const LISTA_CRUZ *lista, int x, int y) {
     NO *no = lista->linhas[x];
     while (no != NULL && no->y < y) no = no->direita;
-    return no != NULL && no->y == y ? no : NULL;
+    if (no == NULL) return NULL;
+    if (no->y != y) return NULL;
+    return no;
 }
 
 bool lista_inserir(LISTA_CRUZ *lista, ITEM *item, int posX, int posY) {
@@ -210,6 +236,7 @@ bool lista_inserir(LISTA_CRUZ *lista, ITEM *item, int posX, int posY) {
         // Mesma coordenada: so insere na lista interna (O(1), ponteiro fim).
         celula->fim->proximo = entrada;
         celula->fim = entrada;
+        lista->total++;
         return true;
     }
 
@@ -246,11 +273,13 @@ bool lista_inserir(LISTA_CRUZ *lista, ITEM *item, int posX, int posY) {
     if (ant == NULL) lista->linhas[posX] = no;
     else             ant->direita = no;
 
+    lista->total++;
     return true;
 }
 
 bool lista_cruz_inserir_item(LISTA_CRUZ *lista, ITEM *item) {
     if (lista == NULL || item == NULL || lista->campo_linha == NULL) return false;
+
     ValorQuery valor_linha, valor_coluna;
     if (!item_ler_campo(item, lista->campo_linha, &valor_linha) ||
         !item_ler_campo(item, lista->campo_coluna, &valor_coluna)) return false;
@@ -274,10 +303,13 @@ ITEM *lista_get(const LISTA_CRUZ *lista, int posX, int posY) {
     if (lista == NULL) return NULL;
     if (posX < 0 || posY < 0 || posX >= lista->nLinhas || posY >= lista->nColunas)
         return NULL;
+
     // desce pela coluna posY procurando x == posX
     NO *no = lista->colunas[posY];
     while (no != NULL && no->x < posX) no = no->abaixo;
-    return no != NULL && no->x == posX ? no->itens->item : NULL;
+    if (no == NULL) return NULL;
+    if (no->x != posX) return NULL;
+    return no->itens->item;
 }
 
 ITEM *lista_remover(LISTA_CRUZ *lista, int posX, int posY) {
@@ -300,6 +332,7 @@ ITEM *lista_remover(LISTA_CRUZ *lista, int posX, int posY) {
         ITEM *item = entrada->item;
         no->itens = entrada->proximo;
         free(entrada);
+        lista->total--;
         return item;
     }
 
@@ -319,8 +352,40 @@ ITEM *lista_remover(LISTA_CRUZ *lista, int posX, int posY) {
 
     ITEM *item = no->itens->item;
     free(no->itens);
-    free(no); // so os nos: a posse do ITEM sai pelo retorno
+    free(no);   // so os nos: a posse do ITEM sai pelo retorno
+    lista->total--;
     return item;
+}
+
+int lista_cruz_tamanho(const LISTA_CRUZ *lista) {
+    if (lista == NULL) return 0;
+    return lista->total;
+}
+
+int lista_cruz_linhas(const LISTA_CRUZ *lista) {
+    if (lista == NULL) return 0;
+    return lista->nLinhas;
+}
+
+int lista_cruz_colunas(const LISTA_CRUZ *lista) {
+    if (lista == NULL) return 0;
+    return lista->nColunas;
+}
+
+// Os mapas de rotulo sao pequenos (dezenas de categorias), entao a busca
+// linear custa menos que manter um indice invertido.
+const char *lista_cruz_rotulo_linha(const LISTA_CRUZ *lista, int indice) {
+    if (lista == NULL || lista->valores_linha == NULL) return NULL;
+    if (indice < 0 || indice >= lista->nLinhas) return NULL;
+    if (lista->valores_linha[indice].tipo != QUERY_TEXTO) return NULL;
+    return lista->valores_linha[indice].valor.texto;
+}
+
+const char *lista_cruz_rotulo_coluna(const LISTA_CRUZ *lista, int indice) {
+    if (lista == NULL || lista->valores_coluna == NULL) return NULL;
+    if (indice < 0 || indice >= lista->nColunas) return NULL;
+    if (lista->valores_coluna[indice].tipo != QUERY_TEXTO) return NULL;
+    return lista->valores_coluna[indice].valor.texto;
 }
 
 // Percurso linha por linha, coluna por coluna dentro de cada linha.
@@ -330,8 +395,8 @@ int lista_cruz_percorrer(LISTA_CRUZ *lista, ItemVisita visita, void *contexto) {
     int n = 0;
     for (int i = 0; i < lista->nLinhas; i++) {
         for (NO *no = lista->linhas[i]; no != NULL; no = no->direita) {
-            for (NO_ITEM *entrada = no->itens; entrada != NULL; entrada = entrada->proximo) {
-                if (!visita(entrada->item, contexto)) return n;
+            for (NO_ITEM *e = no->itens; e != NULL; e = e->proximo) {
+                if (!visita(e->item, contexto)) return n;
                 n++;
             }
         }
@@ -340,12 +405,14 @@ int lista_cruz_percorrer(LISTA_CRUZ *lista, ItemVisita visita, void *contexto) {
 }
 
 int lista_cruz_percorrer_linha(LISTA_CRUZ *lista, int linha,
-                              ItemVisita visita, void *contexto) {
-    if (lista == NULL || visita == NULL || linha < 0 || linha >= lista->nLinhas) return 0;
+                               ItemVisita visita, void *contexto) {
+    if (lista == NULL || visita == NULL) return 0;
+    if (linha < 0 || linha >= lista->nLinhas) return 0;
+
     int n = 0;
     for (NO *no = lista->linhas[linha]; no != NULL; no = no->direita) {
-        for (NO_ITEM *entrada = no->itens; entrada != NULL; entrada = entrada->proximo) {
-            if (!visita(entrada->item, contexto)) return n;
+        for (NO_ITEM *e = no->itens; e != NULL; e = e->proximo) {
+            if (!visita(e->item, contexto)) return n;
             n++;
         }
     }
@@ -353,12 +420,14 @@ int lista_cruz_percorrer_linha(LISTA_CRUZ *lista, int linha,
 }
 
 int lista_cruz_percorrer_coluna(LISTA_CRUZ *lista, int coluna,
-                               ItemVisita visita, void *contexto) {
-    if (lista == NULL || visita == NULL || coluna < 0 || coluna >= lista->nColunas) return 0;
+                                ItemVisita visita, void *contexto) {
+    if (lista == NULL || visita == NULL) return 0;
+    if (coluna < 0 || coluna >= lista->nColunas) return 0;
+
     int n = 0;
     for (NO *no = lista->colunas[coluna]; no != NULL; no = no->abaixo) {
-        for (NO_ITEM *entrada = no->itens; entrada != NULL; entrada = entrada->proximo) {
-            if (!visita(entrada->item, contexto)) return n;
+        for (NO_ITEM *e = no->itens; e != NULL; e = e->proximo) {
+            if (!visita(e->item, contexto)) return n;
             n++;
         }
     }
@@ -366,14 +435,14 @@ int lista_cruz_percorrer_coluna(LISTA_CRUZ *lista, int coluna,
 }
 
 int lista_cruz_percorrer_valor_linha(LISTA_CRUZ *lista, const ValorQuery *valor,
-                                    ItemVisita visita, void *contexto) {
+                                     ItemVisita visita, void *contexto) {
     if (lista == NULL || lista->campo_linha == NULL) return 0;
     int indice = buscar_valor(lista->valores_linha, lista->nLinhas, valor);
     return lista_cruz_percorrer_linha(lista, indice, visita, contexto);
 }
 
 int lista_cruz_percorrer_valor_coluna(LISTA_CRUZ *lista, const ValorQuery *valor,
-                                     ItemVisita visita, void *contexto) {
+                                      ItemVisita visita, void *contexto) {
     if (lista == NULL || lista->campo_coluna == NULL) return 0;
     int indice = buscar_valor(lista->valores_coluna, lista->nColunas, valor);
     return lista_cruz_percorrer_coluna(lista, indice, visita, contexto);
@@ -381,14 +450,17 @@ int lista_cruz_percorrer_valor_coluna(LISTA_CRUZ *lista, const ValorQuery *valor
 
 void lista_imprimir(const LISTA_CRUZ *lista, void (*imprimir_item)(ITEM *)) {
     if (lista == NULL || imprimir_item == NULL) return;
-    printf("Lista cruzada %d x %d\n", lista->nLinhas, lista->nColunas);
+
+    printf("Lista cruzada %d x %d, %d itens\n",
+           lista->nLinhas, lista->nColunas, lista->total);
+
     for (int i = 0; i < lista->nLinhas; i++) {
         bool vazia = true;
         for (NO *no = lista->linhas[i]; no != NULL; no = no->direita) {
             if (vazia) { printf("linha %d:", i); vazia = false; }
             printf(" [col %d] ", no->y);
-            for (NO_ITEM *entrada = no->itens; entrada != NULL; entrada = entrada->proximo)
-                imprimir_item(entrada->item);
+            for (NO_ITEM *e = no->itens; e != NULL; e = e->proximo)
+                imprimir_item(e->item);
         }
         if (vazia) printf("linha %d: (vazia)", i);
         printf("\n");
@@ -405,12 +477,12 @@ void lista_apagar(LISTA_CRUZ **lista) {
         NO *aux = lst->linhas[i];
         while (aux != NULL) {
             NO *prox = aux->direita;
-            NO_ITEM *entrada = aux->itens;
-            while (entrada != NULL) {
-                NO_ITEM *proxima = entrada->proximo;
-                item_apagar(&entrada->item);
-                free(entrada);
-                entrada = proxima;
+            NO_ITEM *e = aux->itens;
+            while (e != NULL) {
+                NO_ITEM *proxima = e->proximo;
+                item_apagar(&e->item);
+                free(e);
+                e = proxima;
             }
             free(aux);
             aux = prox;
