@@ -159,9 +159,24 @@ char *get_nasa_ast_desig(ITEM_NASA *item) {
     return item->asteroid_designation;
 }
 
+char *get_nasa_ast_fullname(ITEM_NASA *item) {
+    if (item == NULL) return NULL;
+    return item->asteroid_fullname;
+}
+
+char *get_nasa_close_approach(ITEM_NASA *item) {
+    if (item == NULL) return NULL;
+    return item->close_approach_date;
+}
+
 int get_nasa_year(ITEM_NASA *item) {
     if (item == NULL) return -1;
     return item->year;
+}
+
+int get_nasa_month(ITEM_NASA *item) {
+    if (item == NULL) return -1;
+    return item->month;
 }
 
 double get_nasa_distance_au(ITEM_NASA *item) {
@@ -169,12 +184,93 @@ double get_nasa_distance_au(ITEM_NASA *item) {
     return item->distance_au;
 }
 
+double get_nasa_velocity_km_s(ITEM_NASA *item) {
+    if (item == NULL) return NAN;
+    return item->velocity_km_s;
+}
+
+double get_nasa_absolute_magnitude(ITEM_NASA *item) {
+    if (item == NULL) return NAN;
+    return item->absolute_magnitude;
+}
+
+int get_nasa_days_until_approach(ITEM_NASA *item) {
+    if (item == NULL) return -1;
+    return item->days_until_approach;
+}
+
 bool get_nasa_is_past_event(ITEM_NASA *item) {
     if (item == NULL) return false;
     return item->is_past_event;
 }
 
-// Os outros 20 getters seguem exatamente este formato, trocando tipo e campo.
+// O _valido acompanha o booleano: false aqui significa "nao sei", nao "nao".
+bool get_nasa_is_past_event_valido(ITEM_NASA *item) {
+    if (item == NULL) return false;
+    return item->is_past_event_valido;
+}
+
+bool get_nasa_is_future_event(ITEM_NASA *item) {
+    if (item == NULL) return false;
+    return item->is_future_event;
+}
+
+bool get_nasa_is_future_event_valido(ITEM_NASA *item) {
+    if (item == NULL) return false;
+    return item->is_future_event_valido;
+}
+
+double get_nasa_risk_score(ITEM_NASA *item) {
+    if (item == NULL) return NAN;
+    return item->risk_score;
+}
+
+int get_nasa_panic_level(ITEM_NASA *item) {
+    if (item == NULL) return -1;
+    return item->panic_level;
+}
+
+char *get_nasa_threat_category(ITEM_NASA *item) {
+    if (item == NULL) return NULL;
+    return item->threat_category;
+}
+
+char *get_nasa_panic_verdict(ITEM_NASA *item) {
+    if (item == NULL) return NULL;
+    return item->panic_verdict;
+}
+
+bool get_nasa_on_sentry_list(ITEM_NASA *item) {
+    if (item == NULL) return false;
+    return item->on_sentry_list;
+}
+
+bool get_nasa_on_sentry_list_valido(ITEM_NASA *item) {
+    if (item == NULL) return false;
+    return item->on_sentry_list_valido;
+}
+
+// Os quatro Sentry sao NAN quando ausentes no CSV. A copia preserva isso:
+// copiar um ausente tem que continuar ausente, nao virar zero.
+double get_nasa_sentry_impact_prob(ITEM_NASA *item) {
+    if (item == NULL) return NAN;
+    return item->sentry_impact_prob;
+}
+
+double get_nasa_sentry_torino_scale(ITEM_NASA *item) {
+    if (item == NULL) return NAN;
+    return item->sentry_torino_scale;
+}
+
+double get_nasa_sentry_palermo_scale(ITEM_NASA *item) {
+    if (item == NULL) return NAN;
+    return item->sentry_palermo_scale;
+}
+
+double get_nasa_sentry_diameter_km(ITEM_NASA *item) {
+    if (item == NULL) return NAN;
+    return item->sentry_diameter_km;
+}
 
 // Enumeracao dos campos consultaveis. Serve para o switch do ler_campo
 // parar de comparar strings: resolve o nome uma vez e despacha por inteiro.
