@@ -8,7 +8,7 @@
 typedef struct lista_cruzada LISTA_CRUZ;
 
 // Modo 1: coordenadas inteiras explicitas, dimensoes fixas na criacao.
-LISTA_CRUZ *lista_criar(int nlinhas, int ncolunas);
+LISTA_CRUZ *lista_cruz_criar(int nlinhas, int ncolunas);
 
 // Modo 2: eixos por valor de campo. Os indices nascem conforme os valores
 // aparecem, entao nao ha dimensao a informar. Campos do CROSS.
