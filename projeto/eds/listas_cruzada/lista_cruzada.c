@@ -96,7 +96,7 @@ static int buscar_valor(const ValorQuery *chaves, int n, const ValorQuery *valor
     return -1;
 }
 
-LISTA_CRUZ *lista_criar(int nlinhas, int ncolunas) {
+LISTA_CRUZ *lista_cruz_criar(int nlinhas, int ncolunas) {
     if (nlinhas <= 0 || ncolunas <= 0) return NULL;
     if ((size_t)nlinhas > SIZE_MAX / sizeof(NO *) ||
         (size_t)ncolunas > SIZE_MAX / sizeof(NO *)) return NULL;
