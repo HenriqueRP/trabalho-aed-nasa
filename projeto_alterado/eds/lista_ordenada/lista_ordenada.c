@@ -41,7 +41,7 @@ static bool copiar_campo(const LISTA_ORD *lista, ITEM *item, ValorQuery **copia)
     ValorQuery *valor = NULL;
     *copia = NULL;
 
-    // Pela API atual, false significa campo desconhecido ou ausente
+    //false significa campo desconhecido ou ausente
     // Manter esse registro no fim evita perder linhas ao carregar a BASE
     if (!item_ler_campo(item, lista->campo, &valor) || valor == NULL) {
         query_valor_apagar(&valor);
