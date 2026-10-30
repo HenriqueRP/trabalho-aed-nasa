@@ -1,3 +1,0 @@
-SIM|risk_score|0.8|0.5|1
-ACCEPT|0.5
-ORDER|similarity|DESC
