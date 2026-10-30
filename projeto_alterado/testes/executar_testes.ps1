@@ -16,7 +16,24 @@ $taskComuns = @(
     (Join-Path $taskProjeto 'query/query.c')
 )
 $taskCasos = @(
-    @{Nome = 'lista_cabeca'; Fontes = @('eds/lista_cabeca/lista_cabeca.c')}
+    @{Nome = 'lista_cabeca'; Fontes = @('eds/lista_cabeca/lista_cabeca.c')},
+    @{Nome = 'lista_ordenada'; Fontes = @('eds/lista_ordenada/lista_ordenada.c')},
+    @{
+        Nome = 'integracao_listas'
+        Argumentos = @((Join-Path $PSScriptRoot 'consulta_lista_ordenada.txt'))
+        Fontes = @(
+            'eds/estrutura/estrutura.c',
+            'eds/fila/fila.c',
+            'eds/pilha/pilha.c',
+            'eds/lista_encadeada/lista_encadeada.c',
+            'eds/lista_sequencial/lista_sequencial.c',
+            'eds/lista_generalizada/lista_generalizada.c',
+            'eds/listas_cruzada/lista_cruzada.c',
+            'eds/lista_cabeca/lista_cabeca.c',
+            'eds/lista_ordenada/lista_ordenada.c',
+            'eds/tad_item_nasa/item_nasa.c'
+        )
+    }
 )
 
 foreach ($taskCaso in $taskCasos) {
@@ -27,6 +44,7 @@ foreach ($taskCaso in $taskCasos) {
 
     & gcc -std=c11 -Wall -Wextra -pedantic -Werror -g @taskIncludes @taskFontes -lm -o $taskExecutavel
     if ($LASTEXITCODE -ne 0) { throw ('Falha ao compilar ' + $taskCaso.Nome) }
-    & $taskExecutavel
+    $taskArgumentos = @($taskCaso.Argumentos | Where-Object { $null -ne $_ })
+    & $taskExecutavel @taskArgumentos
     if ($LASTEXITCODE -ne 0) { throw ('Falha ao executar ' + $taskCaso.Nome) }
 }

@@ -11,6 +11,14 @@
 #include "lista_generalizado.h"
 #include "lista_cruzada.h"
 
+// O header expoe apenas o nome Estrutura para manter os detalhes privados
+// Esta definicao completa permite alocar o adaptador e acessar seus membros
+struct estrutura_ {
+    void *estrutura;
+    OpcaoEstrutura tipo;
+    bool order;              // true indica a direcao DESC da lista ordenada
+};
+
 //cria a estrutura de dados escolhida na configuracao.
 Estrutura *estrutura_criar(OpcaoEstrutura tipo, Query *query) {
     Estrutura *nova = malloc(sizeof(*nova));

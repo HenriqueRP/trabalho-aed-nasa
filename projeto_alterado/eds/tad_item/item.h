@@ -33,7 +33,15 @@ void *item_get_dado(const ITEM *item); //nao transfere posse
 //ordenada quando ORDER nao pede similaridade.
 int item_get_chave(const ITEM *item);
 
+// A similaridade e metadado da consulta, nao uma coluna do dado original
+// Search pode defini-la na copia aceita antes de inserir em RESULT
+// Aceita apenas numeros finitos entre 0 e 1 e preserva o valor em falha
+// Um ITEM novo nao possui pontuacao ate esta funcao ser chamada
+bool item_definir_similaridade(ITEM *item, double similaridade);
+
 //assinatura identica a LeitorCampoQuery: entra direto no query_avaliar.
+// O nome reservado similarity consulta o metadado quando ele esta definido
+// O chamador libera o ValorQuery retornado usando query_valor_apagar
 bool item_ler_campo(const void *item, const char *campo, ValorQuery **saida);
 
 #endif

@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <math.h>
+#include <string.h>
 #include "item.h"
 
 //item.c - envelope generico.
@@ -10,6 +12,8 @@ struct item {
     ItemCopiarFn copiar;         //como duplicar 'dado'
     LeitorCampoQuery ler_campo;  //como consultar um campo de 'dado'
     int chave;                   //ordem de insercao (desempate estavel)
+    double similaridade;
+    bool tem_similaridade;        // Distingue pontuacao zero de pontuacao ausente
 };
 //cria um envelope generico para o dado e suas funcoes de manipulacao.
 
@@ -25,6 +29,8 @@ ITEM *item_criar(void *dado, ItemApagarFn apagar, ItemCopiarFn copiar,
     novo->copiar    = copiar;
     novo->ler_campo = ler_campo;
     novo->chave     = chave;
+    novo->similaridade = 0.0;
+    novo->tem_similaridade = false;
     return novo;
 }
 //cria uma copia profunda do item usando a funcao de copia fornecida.
@@ -41,6 +47,12 @@ ITEM *item_copiar(const ITEM *item) {
     ITEM *novo = item_criar(copia, item->apagar, item->copiar,
                             item->ler_campo, item->chave);
     if (novo == NULL && item->apagar != NULL) item->apagar(&copia);
+
+    // A copia preserva a pontuacao sem compartilhar memoria adicional
+    if (novo != NULL) {
+        novo->similaridade = item->similaridade;
+        novo->tem_similaridade = item->tem_similaridade;
+    }
 
     return novo; //'chave' vai junto: preserva a ordem original do CSV
 }
@@ -65,10 +77,29 @@ int item_get_chave(const ITEM *item) {
     if (item == NULL) return -1;
     return item->chave;
 }
-//consulta um campo do dado por meio da funcao fornecida.
+// Define a pontuacao da consulta sem alterar o registro do dataset
 
+bool item_definir_similaridade(ITEM *item, double similaridade) {
+    if (item == NULL || !isfinite(similaridade) ||
+        similaridade < 0.0 || similaridade > 1.0) return false;
+    item->similaridade = similaridade;
+    item->tem_similaridade = true;
+    return true;
+}
+
+// Consulta o metadado reservado ou delega a leitura ao dono do dado
 bool item_ler_campo(const void *item, const char *campo, ValorQuery **saida) {
     const ITEM *it = item;
-    if (it == NULL || it->ler_campo == NULL) return false;
+    if (saida != NULL) *saida = NULL;
+    if (it == NULL || campo == NULL || saida == NULL) return false;
+
+    // A pontuacao fica no envelope para funcionar com qualquer dataset
+    // Sem pontuacao, a lista ordenada trata o campo como ausente
+    if (strcmp(campo, "similarity") == 0) {
+        if (!it->tem_similaridade) return false;
+        *saida = query_valor_numero(it->similaridade);
+        return *saida != NULL;
+    }
+    if (it->ler_campo == NULL) return false;
     return it->ler_campo(it->dado, campo, saida); //delega ao dono do dado
 }
