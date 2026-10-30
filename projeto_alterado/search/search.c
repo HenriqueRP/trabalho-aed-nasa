@@ -1,4 +1,30 @@
+// A interface POSIX disponibiliza o relogio monotono em sistemas como Linux
+#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "search.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <time.h>
+#endif
+
+static bool marcar_tempo(double *segundos) {
+    // Um relogio monotono evita que ajustes na hora do sistema alterem os tempos
+#ifdef _WIN32
+    LARGE_INTEGER contador, frequencia;
+    if (!QueryPerformanceFrequency(&frequencia) || frequencia.QuadPart <= 0 ||
+        !QueryPerformanceCounter(&contador)) return false;
+    *segundos = (double)contador.QuadPart / (double)frequencia.QuadPart;
+#else
+    struct timespec instante;
+    if (clock_gettime(CLOCK_MONOTONIC, &instante) != 0) return false;
+    *segundos = (double)instante.tv_sec + (double)instante.tv_nsec / 1000000000.0;
+#endif
+    return true;
+}
 
 typedef struct {
     Estrutura *resultado;
@@ -35,7 +61,18 @@ static bool avaliar_registro(ITEM *item, void *contexto) {
         return false;
     }
 
-    if (!estrutura_inserir(busca->resultado, copia)) {
+    // Somente a insercao pertence a RESULT_INSERT_MS
+    // Avaliacao, copia, pontuacao e percurso permanecem em SEARCH_MS
+    double inicio = 0.0, fim = 0.0;
+    bool medir = busca->metricas.tempos_validos && marcar_tempo(&inicio);
+    bool inseriu = estrutura_inserir(busca->resultado, copia);
+    if (medir && marcar_tempo(&fim) && fim >= inicio) {
+        busca->metricas.result_insert_ms += (fim - inicio) * 1000.0;
+    } else {
+        busca->metricas.tempos_validos = false;
+    }
+
+    if (!inseriu) {
         // A insercao recusada nao transfere a posse, portanto Search libera a copia
         // Interromper evita apresentar como completo um resultado que perdeu itens
         item_apagar(&copia);
@@ -66,7 +103,23 @@ ResultadoSearch search_executar(Estrutura *base, Estrutura *resultado,
         .metricas = {0},
         .estado = SEARCH_OK
     };
+    double inicio = 0.0, fim = 0.0;
+    busca.metricas.tempos_validos = marcar_tempo(&inicio);
     int concluidos = estrutura_percorrer(base, avaliar_registro, &busca);
+
+    if (busca.metricas.tempos_validos && marcar_tempo(&fim) && fim >= inicio) {
+        double total_ms = (fim - inicio) * 1000.0;
+        busca.metricas.search_ms = total_ms - busca.metricas.result_insert_ms;
+        if (busca.metricas.search_ms < 0.0) busca.metricas.tempos_validos = false;
+    } else {
+        busca.metricas.tempos_validos = false;
+    }
+    // Falha de medicao nao transforma registros corretos em falha de busca
+    // O indicador permite ao Report distinguir tempo indisponivel de tempo zero
+    if (!busca.metricas.tempos_validos) {
+        busca.metricas.search_ms = 0.0;
+        busca.metricas.result_insert_ms = 0.0;
+    }
 
     // Os percursos contam somente callbacks que retornaram true
     // As metricas proprias tambem contam o ultimo registro em caso de erro

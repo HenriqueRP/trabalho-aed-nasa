@@ -2,6 +2,7 @@
 #define SEARCH_H
 
 #include <stddef.h>
+#include <stdbool.h>
 #include "estrutura.h"
 #include "query.h"
 
@@ -19,6 +20,9 @@ typedef struct {
     size_t n_visitados;   // Registros avaliados, incluindo aquele que causou uma falha
     size_t n_aceitos;     // Registros aprovados pela Query nesta chamada
     size_t n_inseridos;   // Copias que passaram a pertencer a RESULT nesta chamada
+    double search_ms;         // Tempo total menos os intervalos de insercao
+    double result_insert_ms;  // Tempo gasto somente em estrutura_inserir
+    bool tempos_validos;      // false indica que o relogio nao forneceu uma medicao
 } MetricasBusca;
 
 // Percorre toda a BASE e aplica FILTER, SIM e ACCEPT usando query_avaliar
