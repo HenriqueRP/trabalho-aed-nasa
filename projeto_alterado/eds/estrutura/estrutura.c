@@ -144,6 +144,51 @@ bool estrutura_inserir(Estrutura *est, ITEM *item) {
     }
 }
 
+int estrutura_percorrer(Estrutura *est, ItemVisita visita, void *contexto) {
+    if (est == NULL || est->estrutura == NULL || visita == NULL) return -1;
+
+    // Search e Writer recebem sempre ITEMs e nao precisam conhecer os nos
+    // A ordem observada e o percurso natural de cada TAD
+    switch (est->tipo) {
+        case pilha:
+            return pilha_percorrer(est->estrutura, visita, contexto);
+        case fila:
+            return fila_percorrer(est->estrutura, visita, contexto);
+        case lista_seq:
+            return lista_seq_percorrer(est->estrutura, visita, contexto);
+        case lista_enc:
+            return lista_enc_percorrer(est->estrutura, visita, contexto);
+        case lista_cabeca:
+            return lista_cabeca_percorrer(est->estrutura, visita, contexto);
+        case lista_ord:
+            return lista_ord_percorrer(est->estrutura, visita, contexto);
+        case lista_gen:
+            return lista_gen_percorrer(est->estrutura, visita, contexto);
+        case lista_cruz:
+            // O percurso global segue linhas e visita a lista interna da celula
+            // Percorrer colunas novamente repetiria os mesmos registros
+            return lista_cruz_percorrer(est->estrutura, visita, contexto);
+        default:
+            return -1;
+    }
+}
+
+int estrutura_tamanho(const Estrutura *est) {
+    if (est == NULL || est->estrutura == NULL) return -1;
+
+    switch (est->tipo) {
+        case pilha:        return pilha_tamanho(est->estrutura);
+        case fila:         return fila_tamanho(est->estrutura);
+        case lista_seq:    return lista_seq_tam(est->estrutura);
+        case lista_enc:    return lista_enc_tam(est->estrutura);
+        case lista_cabeca: return lista_cabeca_tamanho(est->estrutura);
+        case lista_ord:    return lista_ord_tamanho(est->estrutura);
+        case lista_gen:    return lista_gen_tamanho(est->estrutura);
+        case lista_cruz:   return lista_cruz_tamanho(est->estrutura);
+        default:          return -1;
+    }
+}
+
 //desaloca a estrutura e os recursos que ela administra.
 void estrutura_apagar(Estrutura **est) {
     if (est == NULL || *est == NULL) {
