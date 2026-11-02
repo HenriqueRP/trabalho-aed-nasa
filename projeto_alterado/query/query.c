@@ -362,11 +362,11 @@ static bool interpretar_linha(Query *query, char *linha) {
 //le e valida os comandos do arquivo de consulta.
 
 Query *query_parse(const Config *config) {
-    if (config == NULL || config->path == NULL) {
+    if (config == NULL || config_get_path(config) == NULL) {
         fprintf(stderr, "Query: caminho da consulta nao informado.\n");
         return NULL;
     }
-    FILE *arquivo = fopen(config->path, "r");
+    FILE *arquivo = fopen(config_get_path(config), "r");
     if (arquivo == NULL) {
         perror("Query: nao foi possivel abrir o arquivo");
         return NULL;
@@ -402,7 +402,7 @@ Query *query_parse(const Config *config) {
 
     if (!sucesso) {
         fprintf(stderr, "Query: comando ou leitura invalida em '%s', linha %zu.\n",
-                config->path, numero_linha);
+                config_get_path(config), numero_linha);
         query_apagar(&query);
         return NULL;
     }
@@ -415,7 +415,7 @@ Query *query_parse(const Config *config) {
         }
         if (!isfinite(pesos) || pesos <= 0.0) {
             fprintf(stderr, "Query: soma de pesos SIM invalida em '%s'.\n",
-                    config->path);
+                    config_get_path(config));
             query_apagar(&query);
             return NULL;
         }
