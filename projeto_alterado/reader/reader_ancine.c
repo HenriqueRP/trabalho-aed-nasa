@@ -21,6 +21,9 @@
 //      o item nunca guardar string vazia.
 //   3. sem tratamento de aspas: o CSV do ANCINE nao usa aspas, entao a
 //      string e copiada inteira, do jeito que veio.
+//
+// Os contadores sao opacos: o struct contadores_leitura e definido apenas no
+// reader.c. Aqui so existem os acessores e as funcoes de incremento.
 
 #define NUM_CAMPOS 18    // o CSV do ANCINE tem exatamente 18 colunas
 #define TAM_LINHA  4096  // acima disso a linha e considerada truncada
@@ -108,9 +111,7 @@ bool reader_ancine_loader(Estrutura *base, const Config *config,
                           ContadoresLeitura *contadores) {
     if (base == NULL || config == NULL || contadores == NULL) return false;
 
-    contadores->n_input = 0;
-    contadores->n_inseridos = 0;
-    contadores->n_invalidos = 0;
+    contadores_resetar(contadores);
 
     FILE *arquivo = fopen(config_get_input(config), "r");
     if (arquivo == NULL) {
@@ -132,14 +133,15 @@ bool reader_ancine_loader(Estrutura *base, const Config *config,
         // -limit corta por registros INSERIDOS, nao por linhas lidas: uma
         // linha invalida nao consome cota.
         if (config_get_limit(config) > 0 &&
-            contadores->n_inseridos >= (size_t)config_get_limit(config)) break;
+            contadores_inseridos(contadores) >= (size_t)config_get_limit(config))
+            break;
 
-        contadores->n_input++;
+        contadores_inc_input(contadores);
         linha[strcspn(linha, "\r\n")] = '\0';   // tolera final CRLF
 
         // Layout inesperado: conta como invalida e segue para a proxima linha.
         if (dividir(linha, campos) != NUM_CAMPOS) {
-            contadores->n_invalidos++;
+            contadores_inc_invalidos(contadores);
             continue;
         }
 
@@ -156,7 +158,7 @@ bool reader_ancine_loader(Estrutura *base, const Config *config,
             !ler_int(campos[10], &ano_inicial)    ||
             !ler_int(campos[11], &ano_final)      ||
             !ler_bool(campos[13], &coproducao)) {
-            contadores->n_invalidos++;
+            contadores_inc_invalidos(contadores);
             continue;
         }
 
@@ -189,7 +191,8 @@ bool reader_ancine_loader(Estrutura *base, const Config *config,
         ITEM *item = NULL;
         if (obra != NULL) {
             item = item_criar(obra, apagar_ancine, copiar_ancine,
-                              item_ancine_ler_campo, (int)contadores->n_input);
+                              item_ancine_ler_campo,
+                              (int)contadores_input(contadores));
             if (item == NULL) item_ancine_apagar(&obra);   // envelope falhou
         }
 
@@ -197,10 +200,10 @@ bool reader_ancine_loader(Estrutura *base, const Config *config,
         // e recusa da estrutura. item_apagar aceita NULL.
         if (item == NULL || !estrutura_inserir(base, item)) {
             item_apagar(&item);
-            contadores->n_invalidos++;
+            contadores_inc_invalidos(contadores);
             continue;
         }
-        contadores->n_inseridos++;
+        contadores_inc_inseridos(contadores);
     }
 
     if (ferror(arquivo)) {   // erro de leitura no meio do arquivo
