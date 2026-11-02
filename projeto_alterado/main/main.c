@@ -8,23 +8,18 @@
 //coordena a inicializacao, a leitura, a consulta e a liberacao dos recursos.
 
 int main(int argc, char *argv[]){
-    //config vive na pilha, então vai por endereço
-    //se o parser falhar, ele já liberou o que alocou, mas chamo o apagar de novo
-    //porque é seguro (testa NULL antes de cada free)
-    Config config;
-    if(!config_init(&config, argc, argv)){
-        config_apagar(&config);
-        return 1;
-    }
+    //a configuracao e opaca e gerenciada pelo modulo config.
+    Config *config = config_criar(argc, argv);
+    if (config == NULL) return 1;
 
-    Query *query = query_parse(&config);
+    Query *query = query_parse(config);
     if (query == NULL) {
         config_apagar(&config);
         return 1;
     }
 
-    Estrutura *base = estrutura_criar(config.base, query);
-    Estrutura *resultado = estrutura_criar(config.resultado, query);
+    Estrutura *base = estrutura_criar(config_get_base(config), query);
+    Estrutura *resultado = estrutura_criar(config_get_resultado(config), query);
     if (base == NULL || resultado == NULL) {
         estrutura_apagar(&base);
         estrutura_apagar(&resultado);
