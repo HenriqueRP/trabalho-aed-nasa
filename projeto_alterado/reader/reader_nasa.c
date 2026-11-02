@@ -117,7 +117,7 @@ bool reader_nasa_loader(Estrutura *base, const Config *config,
     contadores->n_inseridos = 0;
     contadores->n_invalidos = 0;
 
-    FILE *arquivo = fopen(config->input, "r");
+    FILE *arquivo = fopen(config_get_input(config), "r");
     if (arquivo == NULL) {
         perror("Reader: nao foi possivel abrir o CSV");
         return false;
@@ -136,8 +136,8 @@ bool reader_nasa_loader(Estrutura *base, const Config *config,
     while (fgets(linha, sizeof linha, arquivo) != NULL) {
         //-limit corta por registros INSERIDOS, nao por linhas lidas: uma
         //linha invalida nao consome cota.
-        if (config->limit > 0 &&
-            contadores->n_inseridos >= (size_t)config->limit) break;
+        if (config_get_limit(config) > 0 &&
+            contadores->n_inseridos >= (size_t)config_get_limit(config)) break;
 
         contadores->n_input++;
         linha[strcspn(linha, "\r\n")] = '\0';   //tolera final CRLF
