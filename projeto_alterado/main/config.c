@@ -6,6 +6,19 @@
 
 #include "config.h"
 
+struct config_ {
+    char *reader;
+    char *input;
+    char *path;
+    char *output;
+    OpcaoEstrutura base;
+    OpcaoEstrutura resultado;
+    int top_k;
+    int limit;
+};
+
+static void config_liberar_conteudo(Config *config);
+
 //traduz o nome que veio do terminal pro enum da base
 //se não bater com nenhum dos oito, devolve uma flag invalida
 //converte o nome da estrutura informado na linha de comando para o enum correspondente.
@@ -64,7 +77,7 @@ static bool config_limit(Config *config, char *str){
 //os argumentos vêm em pares --opcao valor, mas a ordem pode mudar
 //percorre argv e associa cada valor ao nome correspondente
 //valida os argumentos e preenche a configuracao do programa.
-bool config_init(Config *config, int argc, char **argv){
+static bool config_inicializar(Config *config, int argc, char **argv){
     if(config == NULL) return false;
     //zera antes de alocar: se um malloc falhar no meio, o apagar não pega lixo
     config->reader = NULL;
@@ -126,7 +139,7 @@ bool config_init(Config *config, int argc, char **argv){
     
     //base e resultado podem falhar se o nome não for um dos oito
     if(config->base == invalid || config->resultado == invalid){
-        config_apagar(config);
+        config_liberar_conteudo(config);
         return false;
     }
 
@@ -156,7 +169,7 @@ bool config_init(Config *config, int argc, char **argv){
 
     //os dois numeros tambem precisam ser validados
     if(!config_top(config, valores[6]) || !config_limit(config, valores[7])){
-        config_apagar(config);
+        config_liberar_conteudo(config);
         return false;
     }
 
@@ -166,7 +179,7 @@ bool config_init(Config *config, int argc, char **argv){
 //libera o que foi alocado e zera, pra não ficar ponteiro solto
 //não libera o próprio config, ele está na pilha do main
 //libera os caminhos alocados e zera os ponteiros da configuracao.
-void config_apagar(Config *config){
+static void config_liberar_conteudo(Config *config){
     if(config == NULL){
         return;
     }
@@ -183,4 +196,66 @@ void config_apagar(Config *config){
     config->input = NULL;
     config->path = NULL;
     config->output = NULL;
+}
+
+
+//cria a configuracao opaca e valida os argumentos antes de devolve-la.
+Config *config_criar(int argc, char **argv){
+    Config *config = malloc(sizeof(*config));
+    if (config == NULL) return NULL;
+
+    if (!config_inicializar(config, argc, argv)) {
+        config_liberar_conteudo(config);
+        free(config);
+        return NULL;
+    }
+
+    return config;
+}
+
+const char *config_get_reader(const Config *config){
+    if (config == NULL) return NULL;
+    return config->reader;
+}
+
+const char *config_get_input(const Config *config){
+    if (config == NULL) return NULL;
+    return config->input;
+}
+
+const char *config_get_path(const Config *config){
+    if (config == NULL) return NULL;
+    return config->path;
+}
+
+const char *config_get_output(const Config *config){
+    if (config == NULL) return NULL;
+    return config->output;
+}
+
+OpcaoEstrutura config_get_base(const Config *config){
+    if (config == NULL) return invalid;
+    return config->base;
+}
+
+OpcaoEstrutura config_get_resultado(const Config *config){
+    if (config == NULL) return invalid;
+    return config->resultado;
+}
+
+int config_get_top_k(const Config *config){
+    if (config == NULL) return 0;
+    return config->top_k;
+}
+
+int config_get_limit(const Config *config){
+    if (config == NULL) return 0;
+    return config->limit;
+}
+
+void config_apagar(Config **config){
+    if (config == NULL || *config == NULL) return;
+    config_liberar_conteudo(*config);
+    free(*config);
+    *config = NULL;
 }
