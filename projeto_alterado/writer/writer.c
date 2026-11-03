@@ -224,7 +224,9 @@ static bool escrever_item(ITEM *item, void *contexto) {
 
 
 // exporta a estrutura para o arquivo configurado.
-bool writer_exportar(Estrutura *resultado, const Config *config) {
+bool writer_exportar_com_contagem(Estrutura *resultado, const Config *config,
+                                  size_t *n_escritos) {
+    if (n_escritos != NULL) *n_escritos = 0;
     if (resultado == NULL || config == NULL) return false;
 
     const char *entrada = config_get_input(config);
@@ -317,5 +319,11 @@ bool writer_exportar(Estrutura *resultado, const Config *config) {
     // verifica tambem se o fechamento do arquivo foi bem-sucedido.
     if (fclose(arquivo_saida) != 0) sucesso = false;
 
+    if (n_escritos != NULL) *n_escritos = contexto.n_escritos;
     return sucesso;
+}
+
+// Mantem a interface original para clientes que nao precisam da contagem.
+bool writer_exportar(Estrutura *resultado, const Config *config) {
+    return writer_exportar_com_contagem(resultado, config, NULL);
 }
