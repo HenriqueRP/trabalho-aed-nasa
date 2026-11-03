@@ -148,42 +148,42 @@ void item_ancine_apagar(ITEM_ANCINE **item) {
 // O sentinela importa - devolver 0.0 num double seria indistinguivel de uma
 // duracao real igual a zero; NAN nunca e um valor valido do dataset.
 
-char *get_ancine_titulo_original(ITEM_ANCINE *item) {
+const char *get_ancine_titulo_original(ITEM_ANCINE *item) {
     if (item == NULL) return NULL;
     return item->titulo_original;
 }
 
-char *get_ancine_cpb(ITEM_ANCINE *item) {
+const char *get_ancine_cpb(ITEM_ANCINE *item) {
     if (item == NULL) return NULL;
     return item->cpb;
 }
 
-char *get_ancine_data_emissao_cpb(ITEM_ANCINE *item) {
+const char *get_ancine_data_emissao_cpb(ITEM_ANCINE *item) {
     if (item == NULL) return NULL;
     return item->data_emissao_cpb;
 }
 
-char *get_ancine_situacao_obra(ITEM_ANCINE *item) {
+const char *get_ancine_situacao_obra(ITEM_ANCINE *item) {
     if (item == NULL) return NULL;
     return item->situacao_obra;
 }
 
-char *get_ancine_tipo_obra(ITEM_ANCINE *item) {
+const char *get_ancine_tipo_obra(ITEM_ANCINE *item) {
     if (item == NULL) return NULL;
     return item->tipo_obra;
 }
 
-char *get_ancine_subtipo_obra(ITEM_ANCINE *item) {
+const char *get_ancine_subtipo_obra(ITEM_ANCINE *item) {
     if (item == NULL) return NULL;
     return item->subtipo_obra;
 }
 
-char *get_ancine_classificacao_obra(ITEM_ANCINE *item) {
+const char *get_ancine_classificacao_obra(ITEM_ANCINE *item) {
     if (item == NULL) return NULL;
     return item->classificacao_obra;
 }
 
-char *get_ancine_organizacao_temporal(ITEM_ANCINE *item) {
+const char *get_ancine_organizacao_temporal(ITEM_ANCINE *item) {
     if (item == NULL) return NULL;
     return item->organizacao_temporal;
 }
@@ -208,7 +208,7 @@ int get_ancine_ano_producao_final(ITEM_ANCINE *item) {
     return item->ano_producao_final;
 }
 
-char *get_ancine_segmento_destinacao_inicial(ITEM_ANCINE *item) {
+const char *get_ancine_segmento_destinacao_inicial(ITEM_ANCINE *item) {
     if (item == NULL) return NULL;
     return item->segmento_destinacao_inicial;
 }
@@ -218,22 +218,22 @@ bool get_ancine_coproducao_internacional(ITEM_ANCINE *item) {
     return item->coproducao_internacional;
 }
 
-char *get_ancine_requerente(ITEM_ANCINE *item) {
+const char *get_ancine_requerente(ITEM_ANCINE *item) {
     if (item == NULL) return NULL;
     return item->requerente;
 }
 
-char *get_ancine_cnpj_requerente(ITEM_ANCINE *item) {
+const char *get_ancine_cnpj_requerente(ITEM_ANCINE *item) {
     if (item == NULL) return NULL;
     return item->cnpj_requerente;
 }
 
-char *get_ancine_uf_requerente(ITEM_ANCINE *item) {
+const char *get_ancine_uf_requerente(ITEM_ANCINE *item) {
     if (item == NULL) return NULL;
     return item->uf_requerente;
 }
 
-char *get_ancine_municipio_requerente(ITEM_ANCINE *item) {
+const char *get_ancine_municipio_requerente(ITEM_ANCINE *item) {
     if (item == NULL) return NULL;
     return item->municipio_requerente;
 }
@@ -320,7 +320,7 @@ static bool booleano(bool valor, ValorQuery *saida) {
 }
 
 // Ponto de entrada do modulo generico: recebe void* e devolve o campo pedido.
-bool item_ancine_ler_campo(const void *item, const char *campo, ValorQuery *saida) {
+bool item_ancine_ler_campo(const void *item, const char *campo, ValorQuery **saida) {
     if (item == NULL || campo == NULL || saida == NULL) return false;
 
     const ITEM_ANCINE *obra = (const ITEM_ANCINE *)item;
@@ -330,43 +330,43 @@ bool item_ancine_ler_campo(const void *item, const char *campo, ValorQuery *said
 
     switch (id) {
         case CAMPO_TITULO_ORIGINAL:
-            return texto(obra->titulo_original, saida);
+            return texto(obra->titulo_original, *saida);
         case CAMPO_CPB:
-            return texto(obra->cpb, saida);
+            return texto(obra->cpb, *saida);
         case CAMPO_DATA_EMISSAO_CPB:
-            return texto(obra->data_emissao_cpb, saida);
+            return texto(obra->data_emissao_cpb, *saida);
         case CAMPO_SITUACAO_OBRA:
-            return texto(obra->situacao_obra, saida);
+            return texto(obra->situacao_obra, *saida);
         case CAMPO_TIPO_OBRA:
-            return texto(obra->tipo_obra, saida);
+            return texto(obra->tipo_obra, *saida);
         case CAMPO_SUBTIPO_OBRA:
-            return texto(obra->subtipo_obra, saida);
+            return texto(obra->subtipo_obra, *saida);
         case CAMPO_CLASSIFICACAO_OBRA:
-            return texto(obra->classificacao_obra, saida);
+            return texto(obra->classificacao_obra, *saida);
         case CAMPO_ORGANIZACAO_TEMPORAL:
-            return texto(obra->organizacao_temporal, saida);
+            return texto(obra->organizacao_temporal, *saida);
         case CAMPO_SEGMENTO_DESTINACAO:
-            return texto(obra->segmento_destinacao_inicial, saida);
+            return texto(obra->segmento_destinacao_inicial, *saida);
         case CAMPO_REQUERENTE:
-            return texto(obra->requerente, saida);
+            return texto(obra->requerente, *saida);
         case CAMPO_CNPJ_REQUERENTE:
-            return texto(obra->cnpj_requerente, saida);
+            return texto(obra->cnpj_requerente, *saida);
         case CAMPO_UF_REQUERENTE:
-            return texto(obra->uf_requerente, saida);
+            return texto(obra->uf_requerente, *saida);
         case CAMPO_MUNICIPIO_REQUERENTE:
-            return texto(obra->municipio_requerente, saida);
+            return texto(obra->municipio_requerente, *saida);
 
         case CAMPO_DURACAO_TOTAL:
-            return numero(obra->duracao_total_minutos, saida);
+            return numero(obra->duracao_total_minutos, *saida);
         case CAMPO_QUANTIDADE_EPISODIOS:
-            return numero((double)obra->quantidade_episodios, saida);
+            return numero((double)obra->quantidade_episodios, *saida);
         case CAMPO_ANO_INICIAL:
-            return numero((double)obra->ano_producao_inicial, saida);
+            return numero((double)obra->ano_producao_inicial, *saida);
         case CAMPO_ANO_FINAL:
-            return numero((double)obra->ano_producao_final, saida);
+            return numero((double)obra->ano_producao_final, *saida);
 
         case CAMPO_COPRODUCAO_INTERNACIONAL:
-            return booleano(obra->coproducao_internacional, saida);
+            return booleano(obra->coproducao_internacional, *saida);
     }
     return false;   // inalcancavel se CAMPOS_ANCINE e o enum estao sincronizados
 }
