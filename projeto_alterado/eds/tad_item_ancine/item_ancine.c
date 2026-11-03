@@ -321,7 +321,9 @@ static bool booleano(bool valor, ValorQuery *saida) {
 
 // Ponto de entrada do modulo generico: recebe void* e devolve o campo pedido.
 bool item_ancine_ler_campo(const void *item, const char *campo, ValorQuery **saida) {
-    if (item == NULL || campo == NULL || saida == NULL) return false;
+    if (item == NULL || campo == NULL || saida == NULL || *saida == NULL) {
+        return false;
+    }
 
     const ITEM_ANCINE *obra = (const ITEM_ANCINE *)item;
 
