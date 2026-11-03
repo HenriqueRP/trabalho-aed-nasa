@@ -39,10 +39,22 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    // cria os contadores utilizados pelo reader e pelo futuro report.
+    ContadoresLeitura *contadores = contadores_criar();
+
+    if (contadores == NULL) {
+        estrutura_apagar(&base);
+        estrutura_apagar(&resultado);
+        query_apagar(&query);
+        config_apagar(&config);
+        return 1;
+    }
+
     // carrega os dados do arquivo de entrada para a estrutura base.
-    if (!reader_load(base, config)) {
+    if (!reader_load(base, config, contadores)) {
         fprintf(stderr, "Reader: falha ao carregar os dados.\n");
 
+        contadores_apagar(&contadores);
         estrutura_apagar(&base);
         estrutura_apagar(&resultado);
         query_apagar(&query);
@@ -54,13 +66,19 @@ int main(int argc, char *argv[]) {
     // executa a busca e armazena as metricas da operacao.
     MetricasBusca metricas_busca;
 
-    ResultadoSearch estado = search_executar(base, resultado, query, &metricas_busca);
+    ResultadoSearch estado = search_executar(
+        base,
+        resultado,
+        query,
+        &metricas_busca
+    );
 
     if (estado != SEARCH_OK) {
         fprintf(stderr,
                 "Search: busca interrompida com codigo %d\n",
                 (int)estado);
 
+        contadores_apagar(&contadores);
         estrutura_apagar(&base);
         estrutura_apagar(&resultado);
         query_apagar(&query);
@@ -73,6 +91,7 @@ int main(int argc, char *argv[]) {
     if (!writer_exportar(resultado, config)) {
         fprintf(stderr, "Writer: falha ao exportar os resultados.\n");
 
+        contadores_apagar(&contadores);
         estrutura_apagar(&base);
         estrutura_apagar(&resultado);
         query_apagar(&query);
@@ -81,10 +100,10 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // libera as estruturas utilizadas pela execucao.
+    // libera os recursos utilizados pela execucao.
+    contadores_apagar(&contadores);
     estrutura_apagar(&base);
     estrutura_apagar(&resultado);
-
     query_apagar(&query);
     config_apagar(&config);
 
