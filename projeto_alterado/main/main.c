@@ -66,12 +66,7 @@ int main(int argc, char *argv[]) {
     // executa a busca e armazena as metricas da operacao.
     MetricasBusca metricas_busca;
 
-    ResultadoSearch estado = search_executar(
-        base,
-        resultado,
-        query,
-        &metricas_busca
-    );
+    ResultadoSearch estado = search_executar(base, resultado, query, &metricas_busca);
 
     if (estado != SEARCH_OK) {
         fprintf(stderr,
