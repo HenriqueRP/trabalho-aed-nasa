@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "reader_ancine.h"
 #include "item_ancine.h"
@@ -85,11 +86,15 @@ static bool ler_double(const char *s, double *saida) {
 
 // Mesmo criterio do double, com strtol.
 static bool ler_int(const char *s, int *saida) {
-    if (*s == '\0') return false;
+    if (s == NULL || saida == NULL || *s == '\0') return false;
+
     char *fim;
     errno = 0;
     long x = strtol(s, &fim, 10);
+
     if (fim == s || *fim != '\0' || errno == ERANGE) return false;
+    if (x < INT_MIN || x > INT_MAX) return false;
+
     *saida = (int)x;
     return true;
 }
@@ -110,8 +115,6 @@ bool reader_ancine_tem_campo(const char *campo) {
 bool reader_ancine_loader(Estrutura *base, const Config *config,
                           ContadoresLeitura *contadores) {
     if (base == NULL || config == NULL || contadores == NULL) return false;
-
-    contadores_resetar(contadores);
 
     FILE *arquivo = fopen(config_get_input(config), "r");
     if (arquivo == NULL) {
