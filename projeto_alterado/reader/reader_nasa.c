@@ -40,10 +40,15 @@ static size_t dividir(char *linha, char *campos[]) {
     bool dentro = false;
     campos[n++] = linha;
 
-    for (char *p = linha; *p != '\0'; p++) {
-        if (*p == '"') {
-            dentro = !dentro;   // alterna: abre, fecha, abre...
-        } else if (*p == ',' && !dentro) {
+    if (*p == '"') {
+        if (dentro && *(p + 1) == '"') {
+            p++;
+        } 
+        else {
+            dentro = !dentro;
+        }
+    } 
+    else if (*p == ',' && !dentro) {
             if (n == NUM_CAMPOS) return 0;  // 21o campo: layout inesperado
             *p = '\0';                      // fecha o campo atual
             campos[n++] = p + 1;            // o proximo comeca depois da virgula
@@ -106,9 +111,7 @@ bool reader_nasa_tem_campo(const char *campo) {
 bool reader_nasa_loader(Estrutura *base, const Config *config,
                         ContadoresLeitura *contadores) {
     if (base == NULL || config == NULL || contadores == NULL) return false;
-
-    contadores_resetar(contadores);
-
+    
     FILE *arquivo = fopen(config_get_input(config), "r");
     if (arquivo == NULL) {
         perror("Reader: nao foi possivel abrir o CSV");
