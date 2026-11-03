@@ -3,14 +3,7 @@
 #include <stdio.h>
 
 // O relatorio usa stdout; mensagens de diagnostico continuam em stderr.
-void report_imprimir(
-    bool sucesso,
-    const ContadoresLeitura *contadores,
-    const MetricasBusca *metricas,
-    size_t output_records,
-    double load_ms,
-    double write_ms
-) {
+void report_imprimir(bool sucesso, const ContadoresLeitura *contadores, const MetricasBusca *metricas, size_t output_records, double load_ms, double write_ms) {
     size_t input_records = 0;
     size_t matched_records = 0;
     double search_ms = 0.0;
