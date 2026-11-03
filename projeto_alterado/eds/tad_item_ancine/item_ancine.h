@@ -34,7 +34,7 @@ ITEM_ANCINE *item_ancine_copiar(ITEM_ANCINE *item);
 // Ponte para o modulo generico: mesma assinatura de LeitorCampoQuery.
 // Retorna false para campo desconhecido OU valor ausente - os dois casos
 // viram "registro rejeitado", nunca erro fatal.
-bool item_ancine_ler_campo(const void *item, const char *campo, ValorQuery *saida);
+bool item_ancine_ler_campo(const void *item, const char *campo, ValorQuery **saida);
 
 // Validacao antecipada: deixa recusar uma consulta com campo inexistente
 // antes de varrer o CSV inteiro e devolver saida vazia sem explicacao.
@@ -44,26 +44,26 @@ void item_ancine_apagar(ITEM_ANCINE **item);
 
 // Getters: todos testam NULL e devolvem sentinela coerente com o tipo
 // (-1 para int, NAN para double, false para bool, NULL para char*).
-char *get_ancine_titulo_original(ITEM_ANCINE *item);
-char *get_ancine_cpb(ITEM_ANCINE *item);
-char *get_ancine_data_emissao_cpb(ITEM_ANCINE *item);
-char *get_ancine_situacao_obra(ITEM_ANCINE *item);
-char *get_ancine_tipo_obra(ITEM_ANCINE *item);
-char *get_ancine_subtipo_obra(ITEM_ANCINE *item);
-char *get_ancine_classificacao_obra(ITEM_ANCINE *item);
-char *get_ancine_organizacao_temporal(ITEM_ANCINE *item);
+const char *get_ancine_titulo_original(ITEM_ANCINE *item);
+const char *get_ancine_cpb(ITEM_ANCINE *item);
+const char *get_ancine_data_emissao_cpb(ITEM_ANCINE *item);
+const char *get_ancine_situacao_obra(ITEM_ANCINE *item);
+const char *get_ancine_tipo_obra(ITEM_ANCINE *item);
+const char *get_ancine_subtipo_obra(ITEM_ANCINE *item);
+const char *get_ancine_classificacao_obra(ITEM_ANCINE *item);
+const char *get_ancine_organizacao_temporal(ITEM_ANCINE *item);
 
 double get_ancine_duracao_total_minutos(ITEM_ANCINE *item);
 int get_ancine_quantidade_episodios(ITEM_ANCINE *item);
 int get_ancine_ano_producao_inicial(ITEM_ANCINE *item);
 int get_ancine_ano_producao_final(ITEM_ANCINE *item);
 
-char *get_ancine_segmento_destinacao_inicial(ITEM_ANCINE *item);
+const char *get_ancine_segmento_destinacao_inicial(ITEM_ANCINE *item);
 bool get_ancine_coproducao_internacional(ITEM_ANCINE *item);
 
-char *get_ancine_requerente(ITEM_ANCINE *item);
-char *get_ancine_cnpj_requerente(ITEM_ANCINE *item);
-char *get_ancine_uf_requerente(ITEM_ANCINE *item);
-char *get_ancine_municipio_requerente(ITEM_ANCINE *item);
+const char *get_ancine_requerente(ITEM_ANCINE *item);
+const char *get_ancine_cnpj_requerente(ITEM_ANCINE *item);
+const char *get_ancine_uf_requerente(ITEM_ANCINE *item);
+const char *get_ancine_municipio_requerente(ITEM_ANCINE *item);
 
 #endif
