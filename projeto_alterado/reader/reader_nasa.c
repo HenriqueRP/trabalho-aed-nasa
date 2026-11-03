@@ -40,21 +40,21 @@ static size_t dividir(char *linha, char *campos[]) {
     bool dentro = false;
     campos[n++] = linha;
 
-    if (*p == '"') {
-        if (dentro && *(p + 1) == '"') {
-            p++;
-        } 
-        else {
-            dentro = !dentro;
-        }
-    } 
-    else if (*p == ',' && !dentro) {
-            if (n == NUM_CAMPOS) return 0;  // 21o campo: layout inesperado
-            *p = '\0';                      // fecha o campo atual
-            campos[n++] = p + 1;            // o proximo comeca depois da virgula
+    for (char *p = linha; *p != '\0'; p++) {
+        if (*p == '"') {
+            if (dentro && *(p + 1) == '"') {
+                p++;
+            } else {
+                dentro = !dentro;
+            }
+        } else if (*p == ',' && !dentro) {
+            if (n == NUM_CAMPOS) return 0;
+            *p = '\0';
+            campos[n++] = p + 1;
         }
     }
-    if (dentro) return 0;   // aspa aberta ate o fim: linha invalida
+
+    if (dentro) return 0;
     return n;
 }
 
