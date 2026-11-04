@@ -252,7 +252,7 @@ typedef enum {
 } CampoAncine;
 
 // Unica fonte de verdade dos nomes de campo do dataset. Qualquer nome que
-// nao esteja aqui e rejeitado - inclusive na validacao da consulta.
+// nao esteja aqui nao pode ser lido do item.
 static const struct {
     const char *nome;
     CampoAncine id;
@@ -292,38 +292,36 @@ static bool buscar_campo(const char *nome, CampoAncine *saida) {
     return false;
 }
 
-// Versao publica: usada pelo main para recusar consulta com campo invalido
-// antes de comecar a ler o CSV.
+// Permite consultar o esquema do dataset ANCINE.
 bool item_ancine_tem_campo(const char *campo) {
     CampoAncine ignorado;
     return buscar_campo(campo, &ignorado);
 }
 
-// Helpers de preenchimento: devolvem false quando o valor nao e consultavel.
-static bool texto(const char *origem, ValorQuery *saida) {
-    if (origem == NULL) return false;   // campo ausente: nao responde
-    saida->tipo = QUERY_TEXTO;
-    saida->valor.texto = origem;
-    return true;
+// ValorQuery e opaco; sua criacao e responsabilidade da interface Query.
+// Textos sao referencias emprestadas ao ITEM_ANCINE, nao copias.
+static bool texto(const char *origem, ValorQuery **saida) {
+    if (origem == NULL || saida == NULL) return false;
+    *saida = query_valor_texto(origem);
+    return *saida != NULL;
 }
 
-static bool numero(double valor, ValorQuery *saida) {
-    saida->tipo = QUERY_NUMERO;
-    saida->valor.numero = valor;
-    return true;
+static bool numero(double valor, ValorQuery **saida) {
+    if (saida == NULL) return false;
+    *saida = query_valor_numero(valor);
+    return *saida != NULL;
 }
 
-static bool booleano(bool valor, ValorQuery *saida) {
-    saida->tipo = QUERY_BOOLEANO;
-    saida->valor.booleano = valor;
-    return true;
+static bool booleano(bool valor, ValorQuery **saida) {
+    if (saida == NULL) return false;
+    *saida = query_valor_booleano(valor);
+    return *saida != NULL;
 }
 
 // Ponto de entrada do modulo generico: recebe void* e devolve o campo pedido.
 bool item_ancine_ler_campo(const void *item, const char *campo, ValorQuery **saida) {
-    if (item == NULL || campo == NULL || saida == NULL || *saida == NULL) {
-        return false;
-    }
+    if (saida != NULL) *saida = NULL;
+    if (item == NULL || campo == NULL || saida == NULL) return false;
 
     const ITEM_ANCINE *obra = (const ITEM_ANCINE *)item;
 
@@ -332,43 +330,43 @@ bool item_ancine_ler_campo(const void *item, const char *campo, ValorQuery **sai
 
     switch (id) {
         case CAMPO_TITULO_ORIGINAL:
-            return texto(obra->titulo_original, *saida);
+            return texto(obra->titulo_original, saida);
         case CAMPO_CPB:
-            return texto(obra->cpb, *saida);
+            return texto(obra->cpb, saida);
         case CAMPO_DATA_EMISSAO_CPB:
-            return texto(obra->data_emissao_cpb, *saida);
+            return texto(obra->data_emissao_cpb, saida);
         case CAMPO_SITUACAO_OBRA:
-            return texto(obra->situacao_obra, *saida);
+            return texto(obra->situacao_obra, saida);
         case CAMPO_TIPO_OBRA:
-            return texto(obra->tipo_obra, *saida);
+            return texto(obra->tipo_obra, saida);
         case CAMPO_SUBTIPO_OBRA:
-            return texto(obra->subtipo_obra, *saida);
+            return texto(obra->subtipo_obra, saida);
         case CAMPO_CLASSIFICACAO_OBRA:
-            return texto(obra->classificacao_obra, *saida);
+            return texto(obra->classificacao_obra, saida);
         case CAMPO_ORGANIZACAO_TEMPORAL:
-            return texto(obra->organizacao_temporal, *saida);
+            return texto(obra->organizacao_temporal, saida);
         case CAMPO_SEGMENTO_DESTINACAO:
-            return texto(obra->segmento_destinacao_inicial, *saida);
+            return texto(obra->segmento_destinacao_inicial, saida);
         case CAMPO_REQUERENTE:
-            return texto(obra->requerente, *saida);
+            return texto(obra->requerente, saida);
         case CAMPO_CNPJ_REQUERENTE:
-            return texto(obra->cnpj_requerente, *saida);
+            return texto(obra->cnpj_requerente, saida);
         case CAMPO_UF_REQUERENTE:
-            return texto(obra->uf_requerente, *saida);
+            return texto(obra->uf_requerente, saida);
         case CAMPO_MUNICIPIO_REQUERENTE:
-            return texto(obra->municipio_requerente, *saida);
+            return texto(obra->municipio_requerente, saida);
 
         case CAMPO_DURACAO_TOTAL:
-            return numero(obra->duracao_total_minutos, *saida);
+            return numero(obra->duracao_total_minutos, saida);
         case CAMPO_QUANTIDADE_EPISODIOS:
-            return numero((double)obra->quantidade_episodios, *saida);
+            return numero((double)obra->quantidade_episodios, saida);
         case CAMPO_ANO_INICIAL:
-            return numero((double)obra->ano_producao_inicial, *saida);
+            return numero((double)obra->ano_producao_inicial, saida);
         case CAMPO_ANO_FINAL:
-            return numero((double)obra->ano_producao_final, *saida);
+            return numero((double)obra->ano_producao_final, saida);
 
         case CAMPO_COPRODUCAO_INTERNACIONAL:
-            return booleano(obra->coproducao_internacional, *saida);
+            return booleano(obra->coproducao_internacional, saida);
     }
     return false;   // inalcancavel se CAMPOS_ANCINE e o enum estao sincronizados
 }

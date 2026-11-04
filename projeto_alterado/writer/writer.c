@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#ifndef _WIN32
+#include <sys/stat.h>
+#endif
 
 #include "writer.h"
 #include "item.h"
@@ -223,6 +226,20 @@ static bool escrever_item(ITEM *item, void *contexto) {
 }
 
 
+// Compara o proprio caminho e, em POSIX, a identidade do arquivo.
+// Isso cobre tambem caminhos alternativos e links simbolicos existentes.
+static bool mesmo_arquivo(const char *a, const char *b) {
+    if (a == NULL || b == NULL) return false;
+    if (strcmp(a, b) == 0) return true;
+#ifndef _WIN32
+    struct stat sa, sb;
+    if (stat(a, &sa) == 0 && stat(b, &sb) == 0) {
+        return sa.st_dev == sb.st_dev && sa.st_ino == sb.st_ino;
+    }
+#endif
+    return false;
+}
+
 // exporta a estrutura para o arquivo configurado.
 bool writer_exportar_com_contagem(Estrutura *resultado, const Config *config,
                                   size_t *n_escritos) {
@@ -233,6 +250,13 @@ bool writer_exportar_com_contagem(Estrutura *resultado, const Config *config,
     const char *saida = config_get_output(config);
 
     if (entrada == NULL || saida == NULL) return false;
+
+    // fopen(..., "w") trunca o destino; nunca sobrescrever arquivos-fonte.
+    if (mesmo_arquivo(saida, entrada) ||
+        mesmo_arquivo(saida, config_get_path(config))) {
+        fprintf(stderr, "Writer: --output deve ser diferente de --input e --query.\n");
+        return false;
+    }
 
     // abre o arquivo de entrada para recuperar seu cabecalho.
     FILE *arquivo_entrada = fopen(entrada, "r");

@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <errno.h>
 #include <math.h>
 #include <stdio.h>
@@ -19,6 +20,19 @@
 
 #define NUM_CAMPOS 20    // o CSV da Parte 1 tem exatamente 20 colunas
 #define TAM_LINHA  4096  // acima disso a linha e considerada truncada
+
+// Verifica se fgets leu toda a linha; descarta os fragmentos excedentes.
+static bool linha_completa(FILE *arquivo, const char *linha, size_t capacidade) {
+    size_t tamanho = strlen(linha);
+    if (tamanho < capacidade - 1 || strchr(linha, '\n') != NULL) return true;
+
+    int proximo = fgetc(arquivo);
+    if (proximo == EOF) return true; // linha no limite e sem quebra final
+    while (proximo != '\n' && proximo != EOF) {
+        proximo = fgetc(arquivo);
+    }
+    return false;
+}
 
 // Adaptadores: traduzem o ITEM_NASA para o contrato do ITEM generico.
 // Ficam aqui (e nao no item.c) para manter o envelope cego ao dataset.
@@ -77,7 +91,7 @@ static bool ler_double(const char *s, double *saida) {
     errno = 0;
     double x = strtod(s, &fim);
     // rejeita cauda nao numerica ("12abc"), overflow e campo parcial
-    if (fim == s || *fim != '\0' || errno == ERANGE) return false;
+    if (fim == s || *fim != '\0' || errno == ERANGE || !isfinite(x)) return false;
     *saida = x;
     return true;
 }
@@ -89,7 +103,8 @@ static bool ler_int(const char *s, int *saida) {
     char *fim;
     errno = 0;
     long x = strtol(s, &fim, 10);
-    if (fim == s || *fim != '\0' || errno == ERANGE) return false;
+    if (fim == s || *fim != '\0' || errno == ERANGE ||
+        x < INT_MIN || x > INT_MAX) return false;
     *saida = (int)x;
     return true;
 }
@@ -127,6 +142,10 @@ bool reader_nasa_loader(Estrutura *base, const Config *config,
         fclose(arquivo);
         return false;   // arquivo vazio ou ilegivel
     }
+    if (!linha_completa(arquivo, linha, sizeof linha)) {
+        fclose(arquivo);
+        return false;   // cabecalho truncado
+    }
 
     while (fgets(linha, sizeof linha, arquivo) != NULL) {
         // -limit corta por registros INSERIDOS, nao por linhas lidas: uma
@@ -136,6 +155,10 @@ bool reader_nasa_loader(Estrutura *base, const Config *config,
             break;
 
         contadores_inc_input(contadores);
+        if (!linha_completa(arquivo, linha, sizeof linha)) {
+            contadores_inc_invalidos(contadores);
+            continue;
+        }
         linha[strcspn(linha, "\r\n")] = '\0';   // tolera final CRLF
 
         // Layout inesperado: conta como invalida e segue para a proxima linha.

@@ -1,8 +1,14 @@
+#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200809L
+#endif
 
 #include <stdbool.h>
 #include <stdio.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <time.h>
+#endif
 
 #include "config.h"
 #include "query.h"
@@ -14,13 +20,18 @@
 
 // Retorna o instante monotono em segundos.
 static bool marcar_tempo(double *segundos) {
-    struct timespec instante;
-
     if (segundos == NULL) return false;
+#ifdef _WIN32
+    LARGE_INTEGER contador, frequencia;
+    if (!QueryPerformanceFrequency(&frequencia) || frequencia.QuadPart <= 0 ||
+        !QueryPerformanceCounter(&contador)) return false;
+    *segundos = (double)contador.QuadPart / (double)frequencia.QuadPart;
+#else
+    struct timespec instante;
     if (clock_gettime(CLOCK_MONOTONIC, &instante) != 0) return false;
-
     *segundos = (double)instante.tv_sec +
                 (double)instante.tv_nsec / 1000000000.0;
+#endif
     return true;
 }
 
