@@ -170,13 +170,14 @@ bool reader_nasa_loader(Estrutura *base, const Config *config,
         for (size_t i = 0; i < NUM_CAMPOS; i++) campos[i] = sem_aspas(campos[i]);
 
         int ano, mes, dias, nivel;
-        double dist, vel, mag, risco;
+        double dist, vel, mag = NAN, risco;
 
-        // Campos obrigatorios, todos numericos e todos no mesmo if: se
-        // qualquer um falhar, a linha inteira e descartada.
+        // Magnitude pode estar ausente no dataset; mantem NAN nesse caso.
+        // Os demais campos numericos deste bloco sao obrigatorios.
         if (!ler_int(campos[3], &ano)     || !ler_int(campos[4], &mes) ||
             !ler_double(campos[5], &dist) || !ler_double(campos[6], &vel) ||
-            !ler_double(campos[7], &mag)  || !ler_int(campos[8], &dias) ||
+            (*campos[7] != '\0' && !ler_double(campos[7], &mag)) ||
+            !ler_int(campos[8], &dias) ||
             !ler_double(campos[11], &risco) || !ler_int(campos[12], &nivel)) {
             contadores_inc_invalidos(contadores);
             continue;
