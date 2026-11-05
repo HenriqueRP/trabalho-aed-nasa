@@ -93,6 +93,9 @@ bool query_get_cross(const Query *query, const char **campo1,
                      const char **campo2);
 
 //avalia FILTER e SIM para um registro; similaridade pode ser NULL.
+// optamos por usar um ponteiro para função a fim de deixar a função mais geral
+// e poder utiliza-la para qualquer item que forneca um leitor para seus campos
+// utilizamos como referencia o capitulo 6 do livro "A book on C"
 bool query_avaliar(const Query *query, const void *item,
                    LeitorCampoQuery ler_campo, double *similaridade);
 
