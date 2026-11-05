@@ -1,0 +1,6 @@
+# Asteroides com risco moderado/alto, ordenados por risco decrescente.
+FILTER|risk_score|>=|3
+FILTER|year|>=|2020
+ORDER|risk_score|DESC
+GROUP|threat_category|year
+CROSS|threat_category|year

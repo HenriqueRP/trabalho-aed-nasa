@@ -1,0 +1,43 @@
+asteroid_designation,asteroid_fullname,close_approach_date,year,month,distance_au,velocity_km_s,absolute_magnitude,days_until_approach,is_past_event,is_future_event,risk_score,panic_level,threat_category,panic_verdict,on_sentry_list,sentry_impact_prob,sentry_torino_scale,sentry_palermo_scale,sentry_diameter_km
+2021 AB1,(2021 AB1),2021-03-15,2021,3,0.2035,6.207,25.68,-708,True,False,3.66,1,Moderate,Verdict 1,True,5.075e-04,0,-7.78,0.439
+2019 AB2,(2019 AB2),2019-04-15,2019,4,0.0544,15.613,25.75,-647,True,False,9.47,4,High,Verdict 4,False,,,,
+2019 AB3,(2019 AB3),2019-10-15,2019,10,0.2969,6.24,17.87,240,False,True,8.58,4,High,Verdict 4,True,1.443e-04,0,-7.29,0.315
+2020 AB4,(2020 AB4),2020-02-15,2020,2,0.295,20.973,19.84,221,False,True,7.12,3,High,Verdict 3,False,,,,
+2020 AB5,(2020 AB5),2020-08-15,2020,8,0.3434,15.69,19.08,299,False,True,9.23,4,High,Verdict 4,False,,,,
+2020 AB6,(2020 AB6),2020-03-15,2020,3,0.3525,11.102,22.47,175,False,True,4.95,2,Moderate,Verdict 2,False,,,,
+2022 AB7,"(2022 AB7), fragmento, B",2022-05-15,2022,5,0.3084,6.83,21.66,-563,True,False,7.57,3,High,Verdict 3,True,4.890e-04,0,-7.76,0.672
+2021 AB8,(2021 AB8),2021-06-15,2021,6,0.3507,19.859,22.54,34,False,True,0.69,0,Low,Verdict 0,True,2.700e-04,0,-3.82,0.074
+2021 AB9,(2021 AB9),2021-11-15,2021,11,0.2932,22.031,20.79,567,False,True,3.86,1,Moderate,Verdict 1,False,,,,
+2019 AB10,(2019 AB10),2019-08-15,2019,8,0.1842,20.273,21.42,-454,True,False,7.68,3,High,Verdict 3,True,2.477e-04,0,-5.65,0.873
+so,tres,campos
+2019 AB11,(2019 AB11),2019-03-15,2019,3,0.2301,18.736,26.48,777,False,True,4.31,2,Moderate,Verdict 2,False,,,,
+2022 AB12,(2022 AB12),2022-06-15,2022,6,0.3445,14.511,18.0,-731,True,False,1.76,0,Low,Verdict 0,True,2.334e-04,0,-5.09,0.593
+2021 AB13,(2021 AB13),2021-05-15,2021,5,0.012,15.474,19.8,259,False,True,3.19,1,Moderate,Verdict 1,True,8.592e-04,0,-2.30,0.658
+2019 AB14,"(2019 AB14), fragmento, B",2019-08-15,2019,8,0.4508,24.499,26.37,734,False,True,5.59,2,Moderate,Verdict 2,False,,,,
+2022 AB15,(2022 AB15),2022-02-15,2022,2,0.2459,15.011,17.48,-473,True,False,4.41,2,Moderate,Verdict 2,True,6.008e-04,0,-7.39,0.571
+2019 AB16,(2019 AB16),2019-06-15,2019,6,0.3107,6.758,17.7,-130,True,False,1.49,0,Low,Verdict 0,True,3.475e-04,0,-5.82,0.132
+2022 AB17,(2022 AB17),2022-08-15,2022,8,0.2454,12.796,16.87,635,False,True,3.43,1,Moderate,Verdict 1,True,8.289e-04,0,-7.03,0.033
+2021 AB18,(2021 AB18),2021-03-15,2021,3,0.3481,27.854,24.86,-290,True,False,9.79,4,High,Verdict 4,False,,,,
+2021 AB19,(2021 AB19),2021-09-15,2021,9,0.1897,9.176,25.04,190,False,True,5.42,2,Moderate,Verdict 2,False,,,,
+2020 AB20,(2020 AB20),2020-10-15,2020,10,0.4076,29.623,26.08,750,False,True,2.39,1,Low,Verdict 1,False,,,,
+2020 AB21,"(2020 AB21), fragmento, B",2020-04-15,2020,4,0.2636,13.889,15.38,-843,True,False,7.9,3,High,Verdict 3,False,,,,
+2020 AB22,(2020 AB22),2020-12-15,2020,12,0.3065,13.607,25.51,580,False,True,9.88,4,High,Verdict 4,False,,,,
+2021 AB23,(2021 AB23),2021-02-15,2021,2,0.118,10.671,17.56,-482,True,False,4.83,2,Moderate,Verdict 2,False,,,,
+2019 AB24,(2019 AB24),2019-08-15,2019,8,0.4555,13.6,23.36,809,False,True,6.61,3,Moderate,Verdict 3,False,,,,
+x,y,z,notanumber,1,0.1,1,1,1,True,False,1,1,Low,v,False,,,,
+2020 AB25,(2020 AB25),2020-08-15,2020,8,0.4456,15.848,23.27,-723,True,False,8.01,4,High,Verdict 4,False,,,,
+2022 AB26,(2022 AB26),2022-08-15,2022,8,0.2067,28.67,24.42,-552,True,False,9.93,4,High,Verdict 4,True,5.909e-04,0,-5.21,0.659
+2022 AB27,(2022 AB27),2022-11-15,2022,11,0.4694,8.898,22.13,-857,True,False,0.14,0,Low,Verdict 0,False,,,,
+2019 AB28,"(2019 AB28), fragmento, B",2019-09-15,2019,9,0.3773,8.481,27.83,-502,True,False,8.26,4,High,Verdict 4,True,2.519e-04,0,-6.24,0.248
+2021 AB29,(2021 AB29),2021-05-15,2021,5,0.2767,25.855,15.79,615,False,True,3.54,1,Moderate,Verdict 1,False,,,,
+2022 AB30,(2022 AB30),2022-09-15,2022,9,0.0741,8.796,21.64,887,False,True,4.4,2,Moderate,Verdict 2,True,4.032e-06,0,-3.20,0.181
+2022 AB31,(2022 AB31),2022-10-15,2022,10,0.3653,18.912,19.24,161,False,True,5.31,2,Moderate,Verdict 2,False,,,,
+2019 AB32,(2019 AB32),2019-09-15,2019,9,0.0378,9.783,15.55,-700,True,False,5.08,2,Moderate,Verdict 2,False,,,,
+2019 AB33,(2019 AB33),2019-08-15,2019,8,0.1696,29.334,22.88,-492,True,False,6.93,3,Moderate,Verdict 3,False,,,,
+2022 AB34,(2022 AB34),2022-09-15,2022,9,0.4713,22.48,26.39,-369,True,False,9.23,4,High,Verdict 4,False,,,,
+2020 AB35,"(2020 AB35), fragmento, B",2020-08-15,2020,8,0.0772,8.041,20.75,-752,True,False,6.71,3,Moderate,Verdict 3,False,,,,
+2020 AB36,(2020 AB36),2020-11-15,2020,11,0.1584,8.059,25.1,566,False,True,6.43,3,Moderate,Verdict 3,False,,,,
+2021 AB37,(2021 AB37),2021-03-15,2021,3,0.4841,10.49,27.38,-85,True,False,8.85,4,High,Verdict 4,True,6.679e-04,0,-6.66,0.709
+2022 AB38,(2022 AB38),2022-06-15,2022,6,0.2164,13.915,16.2,-151,True,False,0.19,0,Low,Verdict 0,False,,,,
+2022 AB39,(2022 AB39),2022-12-15,2022,12,0.0189,13.287,23.11,149,False,True,9.61,4,High,Verdict 4,True,9.186e-04,0,-6.63,0.878
+2019 AB40,(2019 AB40),2019-05-15,2019,5,0.1432,27.647,17.36,647,False,True,1.3,0,Low,Verdict 0,False,,,,

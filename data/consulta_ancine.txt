@@ -1,0 +1,5 @@
+# Obras com mais de 90 minutos, da mais longa para a mais curta.
+FILTER|duracao_total_minutos|>|90
+ORDER|duracao_total_minutos|DESC
+GROUP|tipo_obra|situacao_obra
+CROSS|tipo_obra|uf_requerente
