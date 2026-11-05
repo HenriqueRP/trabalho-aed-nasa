@@ -21,7 +21,7 @@ typedef struct config_ Config;
 //valida argv, cria a configuracao e retorna NULL se houver erro.
 Config *config_criar(int argc, char **argv);
 
-//getters: os caminhos retornados pertencem a Config e nao devem ser liberados.
+// Os caminhos apontam para argv e nao devem ser liberados pelo programa.
 const char *config_get_reader(const Config *config);
 const char *config_get_input(const Config *config);
 const char *config_get_path(const Config *config);
@@ -31,7 +31,7 @@ OpcaoEstrutura config_get_resultado(const Config *config);
 int config_get_top_k(const Config *config);
 int config_get_limit(const Config *config);
 
-//libera os caminhos e a configuracao; aceita ponteiro nulo.
+// Libera apenas a configuracao; os caminhos pertencem a argv.
 void config_apagar(Config **config);
 
 #endif

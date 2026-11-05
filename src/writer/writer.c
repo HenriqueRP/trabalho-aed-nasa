@@ -21,6 +21,7 @@ typedef struct {
     size_t n_campos;
     size_t n_escritos;
     int top_k;
+    bool eh_ancine;
     bool sucesso;
 } ContextoWriter;
 
@@ -139,7 +140,7 @@ static bool escrever_texto(FILE *arquivo, const char *texto,
 // consulta e escreve um campo de um item.
 // a conversao depende do tipo de valor retornado pela query.
 static bool escrever_campo(FILE *arquivo, ITEM *item,
-                           const char *campo, char delimitador) {
+                           const char *campo, char delimitador, bool eh_ancine) {
     ValorQuery *valor = NULL;
 
     if (!item_ler_campo(item, campo, &valor)) {
@@ -163,17 +164,25 @@ static bool escrever_campo(FILE *arquivo, ITEM *item,
             // valores nao finitos sao representados por celulas vazias.
             if (isfinite(numero)) {
                 char buffer[64];
-                snprintf(buffer, sizeof(buffer), "%.17g", numero);
+                snprintf(buffer, sizeof(buffer), "%.15g", numero);
+                if (eh_ancine) {
+                    // O CSV ANCINE usa virgula como separador decimal.
+                    for (char *p = buffer; *p != '\0'; p++) {
+                        if (*p == '.') *p = ',';
+                    }
+                }
                 sucesso = escrever_texto(arquivo, buffer, delimitador);
             }
             break;
         }
 
         case QUERY_BOOLEANO:
-            if (query_valor_get_booleano(valor)) {
-                sucesso = escrever_texto(arquivo, "true", delimitador);
+            if (eh_ancine) {
+                sucesso = escrever_texto(arquivo,
+                    query_valor_get_booleano(valor) ? "SIM" : "NÃO", delimitador);
             } else {
-                sucesso = escrever_texto(arquivo, "false", delimitador);
+                sucesso = escrever_texto(arquivo,
+                    query_valor_get_booleano(valor) ? "True" : "False", delimitador);
             }
             break;
 
@@ -209,7 +218,7 @@ static bool escrever_item(ITEM *item, void *contexto) {
 
         if (!escrever_campo(
                 writer->arquivo, item,
-                writer->campos[i], writer->delimitador)) {
+                writer->campos[i], writer->delimitador, writer->eh_ancine)) {
             writer->sucesso = false;
             return false;
         }
@@ -322,6 +331,7 @@ bool writer_exportar_com_contagem(Estrutura *resultado, const Config *config,
         .n_campos = n_campos,
         .n_escritos = 0,
         .top_k = config_get_top_k(config),
+        .eh_ancine = strcmp(config_get_reader(config), "ancine") == 0,
         .sucesso = true
     };
 

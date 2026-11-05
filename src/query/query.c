@@ -558,8 +558,11 @@ static bool avaliar_filtro(const FiltroQuery *filtro, const void *item,
                     comparar(atual, numero, filtro->operador);
     } else if (tipo == QUERY_BOOLEANO) {
         bool valor;
-        if (!strcmp(filtro->valor, "true")) valor = true;
-        else if (!strcmp(filtro->valor, "false")) valor = false;
+        if (!strcmp(filtro->valor, "true") ||
+            !strcmp(filtro->valor, "SIM")) valor = true;
+        else if (!strcmp(filtro->valor, "false") ||
+                 !strcmp(filtro->valor, "NÃO") ||
+                 !strcmp(filtro->valor, "NAO")) valor = false;
         else {
             query_valor_apagar(&campo);
             return false;

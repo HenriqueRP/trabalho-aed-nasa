@@ -85,8 +85,8 @@ static const char *ou_nulo(const char *campo) {
     return campo;
 }
 
-// strtod com validacao. Celula vazia e rejeitada antes do parse: sem isso
-// strtod("") devolveria 0 e o registro entraria com dado inventado.
+// Le valores numericos no formato do CSV. O campo de duracao usa
+// virgula decimal (por exemplo, "18,5").
 static bool ler_double(const char *s, double *saida) {
     if (*s == '\0') return false;
     char *fim;
@@ -112,11 +112,17 @@ static bool ler_int(const char *s, int *saida) {
     return true;
 }
 
-// O CSV traz True/False capitalizado. Aceita as duas grafias.
+// O CSV da ANCINE usa SIM/NAO, nao True/False.
 static bool ler_bool(const char *s, bool *saida) {
-    if (!strcmp(s, "True")  || !strcmp(s, "true"))  { *saida = true;  return true; }
-    if (!strcmp(s, "False") || !strcmp(s, "false")) { *saida = false; return true; }
-    return false;   // celula vazia ou valor inesperado
+    if (!strcmp(s, "SIM") || !strcmp(s, "Sim")) {
+        *saida = true;
+        return true;
+    }
+    if (!strcmp(s, "NÃO") || !strcmp(s, "NAO") || !strcmp(s, "Não")) {
+        *saida = false;
+        return true;
+    }
+    return false;
 }
 
 bool reader_ancine_tem_campo(const char *campo) {
@@ -169,22 +175,27 @@ bool reader_ancine_loader(Estrutura *base, const Config *config,
             continue;
         }
 
-        // Campos obrigatorios. Os quatro numericos e o booleano no mesmo if:
-        // se qualquer um falhar, a linha inteira e descartada. O booleano
-        // entra aqui porque coproducao_internacional nao tem par "_valido" -
-        // ";;" nele significa registro incompleto, nao "nao sei".
-        double duracao;
-        int episodios, ano_inicial, ano_final;
-        bool coproducao;
+        // Campos vazios sao comuns na ANCINE (episodios e ano final).
+        // Preserva a ausencia: NAN para double e INT_MIN para int.
+        double duracao = NAN;
+        int episodios = INT_MIN, ano_inicial = INT_MIN, ano_final = INT_MIN;
+        bool coproducao = false;
+        bool coproducao_valida = false;
 
-        if (!ler_double(campos[8], &duracao)      ||
-            !ler_int(campos[9], &episodios)       ||
-            !ler_int(campos[10], &ano_inicial)    ||
-            !ler_int(campos[11], &ano_final)      ||
-            !ler_bool(campos[13], &coproducao)) {
+        // O separador do CSV e ';', mas o decimal usa ','.
+        for (char *p = campos[8]; *p != '\0'; p++) {
+            if (*p == ',') *p = '.';
+        }
+
+        if ((*campos[8] != '\0' && !ler_double(campos[8], &duracao)) ||
+            (*campos[9] != '\0' && !ler_int(campos[9], &episodios)) ||
+            (*campos[10] != '\0' && !ler_int(campos[10], &ano_inicial)) ||
+            (*campos[11] != '\0' && !ler_int(campos[11], &ano_final)) ||
+            (*campos[13] != '\0' && !ler_bool(campos[13], &coproducao))) {
             contadores_inc_invalidos(contadores);
             continue;
         }
+        coproducao_valida = (*campos[13] != '\0');
 
         // Strings passam por ou_nulo: ";;" vira NULL e o item trata como
         // ausente. Nao ha validacao adicional - texto vazio e o unico caso
@@ -203,7 +214,7 @@ bool reader_ancine_loader(Estrutura *base, const Config *config,
             ano_inicial,
             ano_final,
             ou_nulo(campos[12]),  // segmento_destinacao_inicial
-            coproducao,
+            coproducao, coproducao_valida,
             ou_nulo(campos[14]),  // requerente
             ou_nulo(campos[15]),  // cnpj_requerente
             ou_nulo(campos[16]),  // uf_requerente
