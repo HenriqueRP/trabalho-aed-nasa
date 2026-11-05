@@ -1,6 +1,7 @@
 #include "estrutura.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "pilha.h"
 #include "fila.h"
@@ -17,6 +18,8 @@ struct estrutura_ {
     void *estrutura;
     OpcaoEstrutura tipo;
     bool order;              // true indica a direcao DESC da lista ordenada
+    bool ordenar_similaridade;
+    Query *query;            // emprestada: main libera a query depois das estruturas
 };
 
 //cria a estrutura de dados escolhida na configuracao.
@@ -30,6 +33,8 @@ Estrutura *estrutura_criar(OpcaoEstrutura tipo, Query *query) {
     nova->estrutura = NULL;
     nova->tipo = tipo;
     nova->order = false;
+    nova->ordenar_similaridade = false;
+    nova->query = query;
 
     switch (tipo) {
         case pilha:
@@ -63,6 +68,7 @@ Estrutura *estrutura_criar(OpcaoEstrutura tipo, Query *query) {
             }
 
             nova->order = (direcao == QUERY_DESC);
+            nova->ordenar_similaridade = strcmp(campo, "similarity") == 0;
             nova->estrutura = lista_ord_criar(campo);
             break;
         }
@@ -131,6 +137,19 @@ bool estrutura_inserir(Estrutura *est, ITEM *item) {
             return lista_cabeca_adicionar(est->estrutura, item);
 
         case lista_ord:
+            // Quando a BASE e ordenada por similarity, a pontuacao ainda
+            // nao foi calculada pela Search. Calcula antes de inserir,
+            // para manter a ordem durante a propria leitura.
+            if (est->ordenar_similaridade) {
+                ValorQuery *valor = NULL;
+                bool tem_nota = item_ler_campo(item, "similarity", &valor);
+                query_valor_apagar(&valor);
+                if (!tem_nota) {
+                    double nota = 0.0;
+                    query_avaliar(est->query, item, item_ler_campo, &nota);
+                    if (!item_definir_similaridade(item, nota)) return false;
+                }
+            }
             return lista_ord_inserir(est->estrutura, item, est->order);
 
         case lista_gen:

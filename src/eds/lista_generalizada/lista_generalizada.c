@@ -99,8 +99,8 @@ static void anexar(NO_GEN *pai, NO_GEN *novo) {
 static NO_GEN *buscar_filho(const NO_GEN *pai, const ValorQuery *chave) {
     for (NO_GEN *f = pai->info.sublista; f != NULL; f = f->prox) {
         if (f->tipo != NO_SUBLISTA) continue;
-        if (!f->tem_chave) continue;
-        if (query_valor_iguais(f->chave, chave)) return f;
+        if (!f->tem_chave && chave == NULL) return f;
+        if (f->tem_chave && query_valor_iguais(f->chave, chave)) return f;
     }
     return NULL;
 }
@@ -197,13 +197,9 @@ bool lista_gen_inserir_item(LISTA_GEN *lista, ITEM *item) {
 
     bool ok = true;
     for (int i = 0; i < lista->profundidade; i++) {
-        //campo ausente no registro: nao ha nivel onde colocar o item.
-        //recusar e mais honesto do que inventar um grupo "(vazio)". O item
-        //cai em n_invalidos e isso vai para o relatorio.
-        if (!item_ler_campo(item, lista->campos[i], &chaves[i]) || chaves[i] == NULL) {
-            ok = false;
-            break;
-        }
+        // Campo ausente forma um grupo sem chave (NULL), compartilhado
+        // pelos registros que tambem nao possuem esse valor.
+        item_ler_campo(item, lista->campos[i], &chaves[i]);
     }
 
     if (ok) ok = lista_gen_inserir_chaves(lista, item, chaves, lista->profundidade);

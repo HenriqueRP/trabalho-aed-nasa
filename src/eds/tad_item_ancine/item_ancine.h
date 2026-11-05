@@ -6,12 +6,8 @@
 
 // item_ancine.h - TAD do registro de obra audiovisual (Parte 2).
 //
-// Guarda os 18 campos do CSV do ANCINE. Diferente do item_nasa, aqui nao ha
-// par "_valido" nos booleanos: coproducao_internacional e um dado de negocio,
-// nao uma celula que pode estar ausente. Se vier vazia, o registro inteiro e
-// invalido e o reader o descarta.
-//
-// duracao_total_minutos e double porque o dataset traz fracoes (12.5 min).
+// Guarda os 18 campos do CSV da ANCINE, inclusive valores ausentes.
+// duracao_total_minutos e double porque o dataset traz fracoes (12,5 min).
 // Declarar int truncaria a parte decimal sem aviso.
 
 typedef struct item_ancine_ ITEM_ANCINE;
@@ -26,6 +22,7 @@ ITEM_ANCINE *item_ancine_criar(
     double duracao_total_minutos, int quantidade_episodios,
     int ano_producao_inicial, int ano_producao_final,
     const char *segmento_destinacao_inicial, bool coproducao_internacional,
+    bool coproducao_valida,
     const char *requerente, const char *cnpj_requerente,
     const char *uf_requerente, const char *municipio_requerente);
 

@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <math.h>
 #include <string.h>
+#include <ctype.h>
+#include <limits.h>
 
 #include "item_ancine.h"
 
@@ -23,6 +25,7 @@ struct item_ancine_ {
     int ano_producao_final;
     char *segmento_destinacao_inicial;
     bool coproducao_internacional;
+    bool coproducao_valida;
     char *requerente;
     char *cnpj_requerente;
     char *uf_requerente;
@@ -52,6 +55,7 @@ ITEM_ANCINE *item_ancine_criar(
     double duracao_total_minutos, int quantidade_episodios,
     int ano_producao_inicial, int ano_producao_final,
     const char *segmento_destinacao_inicial, bool coproducao_internacional,
+    bool coproducao_valida,
     const char *requerente, const char *cnpj_requerente,
     const char *uf_requerente, const char *municipio_requerente
 ) {
@@ -80,6 +84,7 @@ ITEM_ANCINE *item_ancine_criar(
     ok = ok && copiar_campo(&novo->segmento_destinacao_inicial,
                             segmento_destinacao_inicial);
     novo->coproducao_internacional = coproducao_internacional;
+    novo->coproducao_valida = coproducao_valida;
 
     ok = ok && copiar_campo(&novo->requerente, requerente);
     ok = ok && copiar_campo(&novo->cnpj_requerente, cnpj_requerente);
@@ -114,6 +119,7 @@ ITEM_ANCINE *item_ancine_copiar(ITEM_ANCINE *item) {
         get_ancine_ano_producao_final(item),
         get_ancine_segmento_destinacao_inicial(item),
         get_ancine_coproducao_internacional(item),
+        item->coproducao_valida,
         get_ancine_requerente(item),
         get_ancine_cnpj_requerente(item),
         get_ancine_uf_requerente(item),
@@ -284,7 +290,16 @@ static bool buscar_campo(const char *nome, CampoAncine *saida) {
     if (nome == NULL) return false;
 
     for (size_t i = 0; i < TOTAL_CAMPOS; i++) {
-        if (strcmp(nome, CAMPOS_ANCINE[i].nome) == 0) {
+        // Aceita os nomes maiusculos do cabecalho, sem alterar o texto
+        // original que o writer copia para o arquivo de saida.
+        const char *a = nome;
+        const char *b = CAMPOS_ANCINE[i].nome;
+        while (*a != '\0' && *b != '\0' &&
+               tolower((unsigned char)*a) == tolower((unsigned char)*b)) {
+            a++;
+            b++;
+        }
+        if (*a == '\0' && *b == '\0') {
             *saida = CAMPOS_ANCINE[i].id;
             return true;
         }
@@ -357,16 +372,21 @@ bool item_ancine_ler_campo(const void *item, const char *campo, ValorQuery **sai
             return texto(obra->municipio_requerente, saida);
 
         case CAMPO_DURACAO_TOTAL:
-            return numero(obra->duracao_total_minutos, saida);
+            return isfinite(obra->duracao_total_minutos) &&
+                   numero(obra->duracao_total_minutos, saida);
         case CAMPO_QUANTIDADE_EPISODIOS:
-            return numero((double)obra->quantidade_episodios, saida);
+            return obra->quantidade_episodios != INT_MIN &&
+                   numero((double)obra->quantidade_episodios, saida);
         case CAMPO_ANO_INICIAL:
-            return numero((double)obra->ano_producao_inicial, saida);
+            return obra->ano_producao_inicial != INT_MIN &&
+                   numero((double)obra->ano_producao_inicial, saida);
         case CAMPO_ANO_FINAL:
-            return numero((double)obra->ano_producao_final, saida);
+            return obra->ano_producao_final != INT_MIN &&
+                   numero((double)obra->ano_producao_final, saida);
 
         case CAMPO_COPRODUCAO_INTERNACIONAL:
-            return booleano(obra->coproducao_internacional, saida);
+            return obra->coproducao_valida &&
+                   booleano(obra->coproducao_internacional, saida);
     }
     return false;   // inalcancavel se CAMPOS_ANCINE e o enum estao sincronizados
 }

@@ -59,8 +59,8 @@ static char *copiar_string(const char *origem) {
 //a API de query mantem a representacao de ValorQuery encapsulada.
 //procura um valor entre as chaves de um eixo.
 static int buscar_valor(ValorQuery *const *chaves, int n, const ValorQuery *valor) {
-    if (valor == NULL) return -1;
     for (int i = 0; i < n; i++) {
+        if (chaves[i] == NULL && valor == NULL) return i;
         if (query_valor_iguais(chaves[i], valor)) return i;
     }
     return -1;
@@ -138,8 +138,8 @@ static bool garantir_eixo(LISTA_CRUZ *lista, bool eh_linha,
     if (n == INT_MAX || (size_t)n + 1 > SIZE_MAX / sizeof(NO *) ||
         (size_t)n + 1 > SIZE_MAX / sizeof(ValorQuery *)) return false;
 
-    ValorQuery *copia = query_valor_copiar(valor);
-    if (copia == NULL) return false;
+    ValorQuery *copia = valor != NULL ? query_valor_copiar(valor) : NULL;
+    if (valor != NULL && copia == NULL) return false;
 
     NO **novas_cabecas = malloc(((size_t)n + 1) * sizeof(*novas_cabecas));
     ValorQuery **novas_chaves = malloc(((size_t)n + 1) * sizeof(*novas_chaves));
@@ -259,12 +259,10 @@ bool lista_cruz_inserir_item(LISTA_CRUZ *lista, ITEM *item) {
 
     ValorQuery *valor_linha = NULL;
     ValorQuery *valor_coluna = NULL;
-    if (!item_ler_campo(item, lista->campo_linha, &valor_linha) || valor_linha == NULL ||
-        !item_ler_campo(item, lista->campo_coluna, &valor_coluna) || valor_coluna == NULL) {
-        query_valor_apagar(&valor_linha);
-        query_valor_apagar(&valor_coluna);
-        return false;
-    }
+    // Valores ausentes ocupam seus proprios eixos (chaves NULL).
+    // Assim um registro nao e descartado so porque falta uma coordenada.
+    item_ler_campo(item, lista->campo_linha, &valor_linha);
+    item_ler_campo(item, lista->campo_coluna, &valor_coluna);
 
     int x, y;
     bool nova_linha = false, nova_coluna = false;
