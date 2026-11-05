@@ -1,0 +1,5 @@
+# Asteroides com risco elevado, ordenados do maior para o menor risco.
+FILTER|risk_score|>=|0.60
+ORDER|risk_score|DESC
+GROUP|threat_category|year
+CROSS|threat_category|year

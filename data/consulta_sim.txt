@@ -1,7 +1,0 @@
-# Similaridade com um asteroide de risco ~6 e velocidade ~15 km/s.
-SIM|risk_score|6|4|2
-SIM|velocity_km_s|15|10|1
-ACCEPT|0.4
-ORDER|similarity|DESC
-GROUP|threat_category|year
-CROSS|threat_category|year

@@ -1,0 +1,6 @@
+# Documentarios produzidos a partir de 2000, organizados por UF e ano.
+FILTER|tipo_obra|==|DOCUMENTÁRIO
+FILTER|ano_producao_inicial|>=|2000
+ORDER|ano_producao_inicial|DESC
+GROUP|uf_requerente|ano_producao_inicial
+CROSS|uf_requerente|ano_producao_inicial
